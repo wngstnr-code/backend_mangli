@@ -10,6 +10,7 @@ import paymentRoutes from './modules/payment/payment.routes';
 import invoiceRoutes from './modules/invoice/invoice.routes';
 import visitorCheckinRoutes from './modules/visitor-checkin/visitor-checkin.routes';
 import adminNotificationRoutes from './modules/admin-notification/admin-notification.routes';
+import authRoutes from './modules/auth/auth.routes';
 import { errorHandler } from './middlewares/error-handler';
 
 dotenv.config();
@@ -33,6 +34,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 // Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/tour-packages', tourPackageRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api', orderItemRoutes);

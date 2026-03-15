@@ -1,29 +1,31 @@
 import { Router } from 'express';
 import { paymentController } from './payment.controller';
 import { validateRequiredFields } from '../../middlewares/validate';
+import { authMiddleware } from '../../middlewares/auth';
 
 const router = Router();
 
-// Create Midtrans payment
+// Public: Create Midtrans payment (customer-initiated)
 router.post('/midtrans/:orderId', paymentController.createMidtransPayment);
 
-// Create cash payment
+// Public: Midtrans webhook notification (called by Midtrans servers)
+router.post('/midtrans/notification', paymentController.handleNotification);
+
+// Admin: Create cash payment
 router.post(
   '/cash/:orderId',
+  authMiddleware,
   validateRequiredFields(['amount']),
   paymentController.createCashPayment
 );
 
-// Midtrans webhook notification
-router.post('/midtrans/notification', paymentController.handleNotification);
+// Admin: Get payment by order
+router.get('/order/:orderId', authMiddleware, paymentController.getByOrderId);
 
-// Get payment by order
-router.get('/order/:orderId', paymentController.getByOrderId);
+// Admin: Get all payments
+router.get('/', authMiddleware, paymentController.getAll);
 
-// Get all payments (admin)
-router.get('/', paymentController.getAll);
-
-// Get payment by ID
-router.get('/:id', paymentController.getById);
+// Admin: Get payment by ID
+router.get('/:id', authMiddleware, paymentController.getById);
 
 export default router;

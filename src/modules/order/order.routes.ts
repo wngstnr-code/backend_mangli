@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { orderController } from './order.controller';
 import { validateRequiredFields } from '../../middlewares/validate';
+import { authMiddleware } from '../../middlewares/auth';
 
 const router = Router();
 
@@ -11,12 +12,15 @@ router.post(
   orderController.create
 );
 
-// Admin routes (TODO: add auth middleware)
-router.get('/', orderController.getAll);
+// Public: lookup by order number (for customer tracking)
 router.get('/number/:orderNumber', orderController.getByOrderNumber);
-router.get('/:id', orderController.getById);
+
+// Admin routes (protected)
+router.get('/', authMiddleware, orderController.getAll);
+router.get('/:id', authMiddleware, orderController.getById);
 router.patch(
   '/:id/status',
+  authMiddleware,
   validateRequiredFields(['status']),
   orderController.updateStatus
 );
