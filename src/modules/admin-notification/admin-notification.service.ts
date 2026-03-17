@@ -122,6 +122,21 @@ export class AdminNotificationService {
       order_id: orderId,
     });
   }
+
+  /**
+   * Create notification for a received payment (called from PaymentService)
+   */
+  async notifyPaymentReceived(orderNumber: string, totalAmount: number, orderId: string, provider: string): Promise<void> {
+    const formatCurrency = (amount: number): string =>
+      new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
+
+    await this.create({
+      type: 'payment_received',
+      title: `Pembayaran Diterima #${orderNumber}`,
+      message: `Pembayaran senilai ${formatCurrency(totalAmount)} via ${provider.toUpperCase()} telah diterima.`,
+      order_id: orderId,
+    });
+  }
 }
 
 export const adminNotificationService = new AdminNotificationService();

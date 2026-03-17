@@ -21,7 +21,7 @@ export class VisitorCheckinService {
       throw new AppError('Order tidak ditemukan', 404);
     }
 
-    if (!['paid', 'confirmed'].includes(order.status)) {
+    if (order.status !== 'paid') {
       throw new AppError(
         `Order #${order.order_number} belum dibayar (status: ${order.status})`,
         400

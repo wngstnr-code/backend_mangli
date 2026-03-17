@@ -3,6 +3,7 @@ import { snap } from '../../config/midtrans';
 import { Payment, CreateCashPaymentDTO, MidtransNotificationPayload } from '../../types/payment.types';
 import { AppError } from '../../middlewares/error-handler';
 import { orderService } from '../order/order.service';
+import { adminNotificationService } from '../admin-notification/admin-notification.service';
 
 const TABLE = 'payments';
 
@@ -109,8 +110,13 @@ export class PaymentService {
 
     if (error) throw new AppError(error.message, 500);
 
-    // Update order status to success
-    await orderService.updateStatus(orderId, { status: 'success' });
+    // Update order status to paid
+    await orderService.updateStatus(orderId, { status: 'paid' });
+
+    // Send admin notification
+    adminNotificationService
+      .notifyPaymentReceived(order.order_number, dto.amount, orderId, 'cash')
+      .catch((err) => console.error('Failed to send admin notification:', err));
 
     return payment as Payment;
   }
@@ -136,10 +142,10 @@ export class PaymentService {
 
     if (transaction_status === 'capture') {
       status = fraud_status === 'accept' ? 'settlement' : 'challenge';
-      orderStatus = fraud_status === 'accept' ? 'success' : 'pending';
+      orderStatus = fraud_status === 'accept' ? 'paid' : 'pending';
     } else if (transaction_status === 'settlement') {
       status = 'settlement';
-      orderStatus = 'success';
+      orderStatus = 'paid';
     } else if (['cancel', 'deny'].includes(transaction_status)) {
       status = 'failed';
       orderStatus = 'failed';
@@ -180,6 +186,15 @@ export class PaymentService {
 
     // Update order status
     await orderService.updateStatus(payment.order_id, { status: orderStatus });
+
+    // Send admin notification if payment is successful
+    if (status === 'settlement') {
+      // Get order details for order number and total amount
+      const order = await orderService.getById(payment.order_id);
+      adminNotificationService
+        .notifyPaymentReceived(order.order_number, Number(order.total_amount), payment.order_id, 'midtrans')
+        .catch((err) => console.error('Failed to send admin notification:', err));
+    }
 
     return updated as Payment;
   }

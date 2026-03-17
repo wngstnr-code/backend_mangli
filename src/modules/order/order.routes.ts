@@ -8,7 +8,7 @@ const router = Router();
 // Public routes (no auth required)
 router.post(
   '/',
-  validateRequiredFields(['full_name', 'phone_number', 'email', 'items']),
+  validateRequiredFields(['full_name', 'phone_number', 'email', 'visit_date', 'items']),
   orderController.create
 );
 

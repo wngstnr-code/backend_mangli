@@ -2,7 +2,7 @@ export interface TourPackage {
   id: string;
   name: string;
   slug: string;
-  travel_date: string;
+  available_days: number[];
   description: string;
   price: number;
   discount_price: number;
@@ -20,7 +20,7 @@ export interface TourPackage {
 export interface CreateTourPackageDTO {
   name: string;
   slug: string;
-  travel_date: string;
+  available_days: number[];
   description: string;
   price: number;
   discount_price?: number;
@@ -35,7 +35,7 @@ export interface CreateTourPackageDTO {
 export interface UpdateTourPackageDTO {
   name?: string;
   slug?: string;
-  travel_date?: string;
+  available_days?: number[];
   description?: string;
   price?: number;
   discount_price?: number;

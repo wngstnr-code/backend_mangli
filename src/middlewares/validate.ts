@@ -8,6 +8,14 @@ export const validateRequiredFields = (requiredFields: string[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const missingFields: string[] = [];
 
+    if (!req.body) {
+      res.status(400).json({
+        success: false,
+        message: 'Request body tidak boleh kosong',
+      });
+      return;
+    }
+
     for (const field of requiredFields) {
       if (req.body[field] === undefined || req.body[field] === null || req.body[field] === '') {
         missingFields.push(field);

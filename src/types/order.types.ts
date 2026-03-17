@@ -8,7 +8,8 @@ export interface Order {
   phone_number: string;
   email: string;
   order_number: string;
-  source: string;
+  visit_date: string;
+  payment_method: string;
   status: string;
   total_amount: number;
   admin_notes: string | null;
@@ -21,7 +22,8 @@ export interface CreateOrderDTO {
   full_name: string;
   phone_number: string;
   email: string;
-  source?: string;
+  visit_date: string;
+  payment_method: string;
   user_id?: string;
   created_by?: string;
   admin_notes?: string;

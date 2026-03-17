@@ -13,7 +13,7 @@ router.get('/:slug', tourPackageController.getBySlug);
 router.post(
   '/',
   authMiddleware,
-  validateRequiredFields(['name', 'slug', 'travel_date', 'description', 'price', 'duration_days', 'max_participants', 'location']),
+  validateRequiredFields(['name', 'slug', 'available_days', 'description', 'price', 'duration_days', 'max_participants', 'location']),
   tourPackageController.create
 );
 router.put('/:id', authMiddleware, tourPackageController.update);

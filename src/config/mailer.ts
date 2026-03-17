@@ -13,4 +13,4 @@ export const transporter = nodemailer.createTransport({
   },
 });
 
-export const SMTP_FROM = process.env.SMTP_FROM || 'Mangli Travel <noreply@mangli.com>';
+export const SMTP_FROM = process.env.SMTP_FROM || 'KAWAN Mangli <noreply@mangli.com>';

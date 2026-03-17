@@ -49,11 +49,11 @@ export function generateInvoiceHTML(
 
   const statusLabel = (status: string): string => {
     const map: Record<string, string> = {
-      pending: '⏳ Menunggu Pembayaran',
-      paid: '✅ Sudah Dibayar',
-      confirmed: '✅ Dikonfirmasi',
-      cancelled: '❌ Dibatalkan',
-      expired: '⏰ Kedaluwarsa',
+      pending: 'Menunggu Pembayaran',
+      paid: 'Sudah Dibayar',
+      confirmed: 'Dikonfirmasi',
+      cancelled: 'Dibatalkan',
+      expired: 'Kedaluwarsa',
     };
     return map[status] || status;
   };
@@ -81,7 +81,7 @@ export function generateInvoiceHTML(
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <!-- Header -->
     <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-      <h1 style="color: white; margin: 0; font-size: 24px;">🏔️ Mangli Travel</h1>
+      <h1 style="color: white; margin: 0; font-size: 24px;">KAWAN Mangli</h1>
       <p style="color: #d1fae5; margin: 8px 0 0 0; font-size: 14px;">Invoice Pemesanan</p>
     </div>
 
@@ -147,14 +147,14 @@ export function generateInvoiceHTML(
       <!-- Payment Reminder -->
       <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 16px; border-radius: 8px; margin-top: 16px;">
         <p style="margin: 0; font-size: 14px; color: #92400e;">
-          ⚠️ Harap selesaikan pembayaran sebelum <strong>${formatDate(order.expired_at)}</strong>
+          Harap selesaikan pembayaran sebelum <strong>${formatDate(order.expired_at)}</strong>
         </p>
       </div>` : ''}
 
       <!-- Footer -->
       <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; text-align: center;">
-        <p style="margin: 0; font-size: 13px; color: #9ca3af;">Terima kasih telah memesan di Mangli Travel!</p>
-        <p style="margin: 4px 0 0 0; font-size: 12px; color: #d1d5db;">Email ini dikirim otomatis, mohon tidak membalas email ini.</p>
+        <p style="margin: 0; font-size: 13px; color: #9ca3af;">Terima kasih telah memesan Tiket KAWAN Mangli!</p>
+        <p style="margin: 4px 0 0 0; font-size: 12px; color: #9ca3af;">Email ini dikirim otomatis, mohon tidak membalas email ini.</p>
       </div>
     </div>
   </div>

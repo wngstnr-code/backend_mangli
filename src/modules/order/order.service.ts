@@ -19,6 +19,13 @@ export class OrderService {
       throw new AppError('Minimal satu item harus ditambahkan', 400);
     }
 
+    const allowedPaymentMethods = ['midtrans', 'cash'];
+    const paymentMethod = orderData.payment_method || 'midtrans';
+    
+    if (!allowedPaymentMethods.includes(paymentMethod)) {
+      throw new AppError('Metode pembayaran tidak valid. Gunakan "midtrans" atau "cash".', 400);
+    }
+
     // Calculate total amount from items
     let totalAmount = 0;
     const itemDetails = [];
@@ -55,7 +62,8 @@ export class OrderService {
       .insert({
         ...orderData,
         order_number: orderNumber,
-        source: orderData.source || 'web',
+        payment_method: paymentMethod,
+        visit_date: orderData.visit_date,
         status: 'pending',
         total_amount: totalAmount,
         expired_at: expiredAt.toISOString(),

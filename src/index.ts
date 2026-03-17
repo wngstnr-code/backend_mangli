@@ -12,6 +12,7 @@ import visitorCheckinRoutes from './modules/visitor-checkin/visitor-checkin.rout
 import adminNotificationRoutes from './modules/admin-notification/admin-notification.routes';
 import authRoutes from './modules/auth/auth.routes';
 import { errorHandler } from './middlewares/error-handler';
+import { testConnection } from './config/supabase';
 
 dotenv.config();
 
@@ -46,9 +47,10 @@ app.use('/api/admin-notifications', adminNotificationRoutes);
 // Global error handler (must be last)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
+app.listen(PORT,async () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/api/health`);
+  await testConnection();
 });
 
 export default app;
