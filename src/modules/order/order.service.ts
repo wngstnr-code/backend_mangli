@@ -37,6 +37,45 @@ export class OrderService {
         throw new AppError(`Paket "${tourPackage.name}" sedang tidak aktif`, 400);
       }
 
+      // Validate visit_date against available_days
+      const visitDate = new Date(orderData.visit_date);
+      const dayOfWeek = visitDate.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+
+      if (tourPackage.available_days && !tourPackage.available_days.includes(dayOfWeek)) {
+        const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        throw new AppError(
+          `Paket "${tourPackage.name}" tidak tersedia di hari ${dayNames[dayOfWeek]}`,
+          400
+        );
+      }
+
+      // Validate visit_date against blocked_dates
+      const visitDateStr = orderData.visit_date; // format: YYYY-MM-DD
+      if (tourPackage.blocked_dates && tourPackage.blocked_dates.includes(visitDateStr)) {
+        throw new AppError(
+          `Paket "${tourPackage.name}" tidak tersedia pada tanggal ${visitDateStr}`,
+          400
+        );
+      }
+
+      // Validate quota (max_participants) for this package on the visit_date
+      const { data: bookedData } = await supabase
+        .from('order_items')
+        .select('quantity, orders!inner(visit_date, status)')
+        .eq('tour_package_id', item.tour_package_id)
+        .eq('orders.visit_date', orderData.visit_date)
+        .in('orders.status', ['pending', 'paid']);
+
+      const totalBooked = bookedData?.reduce((sum: number, row: { quantity: number }) => sum + row.quantity, 0) || 0;
+
+      if (totalBooked + item.quantity > tourPackage.max_participants) {
+        const remaining = tourPackage.max_participants - totalBooked;
+        throw new AppError(
+          `Kuota paket "${tourPackage.name}" pada tanggal ${visitDateStr} tidak mencukupi. Sisa kuota: ${remaining} orang.`,
+          400
+        );
+      }
+
       const unitPrice = tourPackage.discount_price || tourPackage.price;
       const subtotal = unitPrice * item.quantity;
       totalAmount += subtotal;
@@ -52,9 +91,16 @@ export class OrderService {
     // Generate unique order number
     const orderNumber = generateOrderNumber();
 
-    // Set expiry 24 hours from now
-    const expiredAt = new Date();
-    expiredAt.setHours(expiredAt.getHours() + 24);
+    // Set expiry based on payment method
+    let expiredAt: Date;
+    if (paymentMethod === 'cash') {
+      // Cash: expires at end of visit_date (23:59:59)
+      expiredAt = new Date(`${orderData.visit_date}T23:59:59+07:00`);
+    } else {
+      // Midtrans: expires 24 hours from now
+      expiredAt = new Date();
+      expiredAt.setHours(expiredAt.getHours() + 24);
+    }
 
     // Insert order
     const { data: order, error: orderError } = await supabase
@@ -189,6 +235,52 @@ export class OrderService {
     if (error) throw new AppError(error.message, 500);
 
     return data as Order;
+  }
+
+  /**
+   * Cancel an order (only from pending status)
+   */
+  async cancelOrder(id: string): Promise<Order> {
+    const order = await this.getById(id);
+
+    if (order.status !== 'pending') {
+      throw new AppError(`Order tidak bisa dibatalkan karena statusnya sudah "${order.status}"`, 400);
+    }
+
+    const { data, error } = await supabase
+      .from(TABLE)
+      .update({
+        status: 'cancelled',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new AppError(error.message, 500);
+
+    return data as Order;
+  }
+
+  /**
+   * Expire all overdue pending orders (called by cron/manual trigger)
+   */
+  async expireOverdueOrders(): Promise<{ expired_count: number }> {
+    const now = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from(TABLE)
+      .update({
+        status: 'expired',
+        updated_at: now,
+      })
+      .eq('status', 'pending')
+      .lt('expired_at', now)
+      .select('id');
+
+    if (error) throw new AppError(error.message, 500);
+
+    return { expired_count: data?.length || 0 };
   }
 }
 

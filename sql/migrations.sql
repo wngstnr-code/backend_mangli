@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS tour_packages (
     image_url TEXT,
     gallery_urls TEXT[] DEFAULT '{}',
     is_active BOOLEAN DEFAULT TRUE,
+    blocked_dates DATE[] DEFAULT '{}',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ
@@ -157,6 +158,8 @@ CREATE TABLE IF NOT EXISTS admins (
     password TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'admin',
     is_active BOOLEAN DEFAULT TRUE,
+    reset_token TEXT,
+    reset_token_expires TIMESTAMPTZ,
     last_login_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()

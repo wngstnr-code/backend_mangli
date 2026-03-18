@@ -23,6 +23,7 @@
   "homepage": "https://github.com/wngstnr-code/backend_mangli#readme",
   "dependencies": {
     "@supabase/supabase-js": "^2.99.1",
+    "@types/multer": "^2.1.0",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -30,6 +31,7 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "midtrans-client": "^1.4.3",
+    "multer": "^2.1.1",
     "nodemailer": "^8.0.2"
   },
   "devDependencies": {

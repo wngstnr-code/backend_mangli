@@ -11,6 +11,8 @@ import invoiceRoutes from './modules/invoice/invoice.routes';
 import visitorCheckinRoutes from './modules/visitor-checkin/visitor-checkin.routes';
 import adminNotificationRoutes from './modules/admin-notification/admin-notification.routes';
 import authRoutes from './modules/auth/auth.routes';
+import dashboardRoutes from './modules/dashboard/dashboard.routes';
+import uploadRoutes from './modules/upload/upload.routes';
 import { errorHandler } from './middlewares/error-handler';
 import { testConnection } from './config/supabase';
 
@@ -43,6 +45,8 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/visitor-checkins', visitorCheckinRoutes);
 app.use('/api/admin-notifications', adminNotificationRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Global error handler (must be last)
 app.use(errorHandler);

@@ -24,5 +24,7 @@ router.patch(
   validateRequiredFields(['status']),
   orderController.updateStatus
 );
+router.patch('/:id/cancel', authMiddleware, orderController.cancelOrder);
+router.post('/expire-check', authMiddleware, orderController.expireCheck);
 
 export default router;

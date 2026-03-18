@@ -1,8 +1,10 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { supabase } from '../../config/supabase';
-import { Admin, AdminLoginDTO, AdminRegisterDTO, AuthResponse, AdminPayload } from '../../types/auth.types';
+import { Admin, AdminLoginDTO, AdminRegisterDTO, AuthResponse, AdminPayload, UpdateProfileDTO, ForgotPasswordDTO, ResetPasswordDTO } from '../../types/auth.types';
 import { AppError } from '../../middlewares/error-handler';
+import { transporter, SMTP_FROM } from '../../config/mailer';
 
 const TABLE = 'admins';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-here';
@@ -119,6 +121,121 @@ export class AuthService {
     };
 
     return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  }
+
+  /**
+   * Update admin profile (name and/or password)
+   */
+  async updateProfile(adminId: string, dto: UpdateProfileDTO): Promise<Omit<Admin, 'password'>> {
+    // Get current admin
+    const { data: admin, error: fetchError } = await supabase
+      .from(TABLE)
+      .select('*')
+      .eq('id', adminId)
+      .single();
+
+    if (fetchError || !admin) throw new AppError('Admin tidak ditemukan', 404);
+
+    // Verify current password
+    const isValid = await bcrypt.compare(dto.current_password, admin.password);
+    if (!isValid) throw new AppError('Password saat ini salah', 401);
+
+    const updateData: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (dto.name) updateData.name = dto.name;
+    if (dto.password) updateData.password = await bcrypt.hash(dto.password, SALT_ROUNDS);
+
+    const { data, error } = await supabase
+      .from(TABLE)
+      .update(updateData)
+      .eq('id', adminId)
+      .select('id, name, email, role, is_active, last_login_at, created_at, updated_at')
+      .single();
+
+    if (error) throw new AppError(error.message, 500);
+
+    return data as Omit<Admin, 'password'>;
+  }
+
+  /**
+   * Send reset password email
+   */
+  async forgotPassword(dto: ForgotPasswordDTO): Promise<{ message: string }> {
+    const { data: admin } = await supabase
+      .from(TABLE)
+      .select('id, email, name')
+      .eq('email', dto.email)
+      .single();
+
+    // Always return success even if email not found (security best practice)
+    if (!admin) {
+      return { message: 'Jika email terdaftar, link reset password telah dikirim.' };
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpires = new Date();
+    resetTokenExpires.setHours(resetTokenExpires.getHours() + 1); // 1 hour expiry
+
+    await supabase
+      .from(TABLE)
+      .update({
+        reset_token: resetToken,
+        reset_token_expires: resetTokenExpires.toISOString(),
+      })
+      .eq('id', admin.id);
+
+    // Send reset email
+    await transporter.sendMail({
+      from: SMTP_FROM,
+      to: admin.email,
+      subject: 'Reset Password - KAWAN Mangli',
+      html: `
+        <h2>Reset Password</h2>
+        <p>Halo ${admin.name},</p>
+        <p>Anda menerima email ini karena ada permintaan reset password untuk akun Anda.</p>
+        <p>Gunakan token berikut untuk mereset password Anda:</p>
+        <p style="font-size: 18px; font-weight: bold; background: #f0f0f0; padding: 10px; border-radius: 5px;">${resetToken}</p>
+        <p>Token ini berlaku selama 1 jam.</p>
+        <p>Jika Anda tidak merasa melakukan permintaan ini, abaikan email ini.</p>
+      `,
+    });
+
+    return { message: 'Jika email terdaftar, link reset password telah dikirim.' };
+  }
+
+  /**
+   * Reset password using token
+   */
+  async resetPassword(dto: ResetPasswordDTO): Promise<{ message: string }> {
+    const { data: admin, error } = await supabase
+      .from(TABLE)
+      .select('id, reset_token, reset_token_expires')
+      .eq('reset_token', dto.token)
+      .single();
+
+    if (error || !admin) throw new AppError('Token tidak valid', 400);
+
+    // Check if token expired
+    if (new Date(admin.reset_token_expires) < new Date()) {
+      throw new AppError('Token sudah kedaluwarsa', 400);
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.new_password, SALT_ROUNDS);
+
+    await supabase
+      .from(TABLE)
+      .update({
+        password: hashedPassword,
+        reset_token: null,
+        reset_token_expires: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', admin.id);
+
+    return { message: 'Password berhasil direset. Silakan login dengan password baru.' };
   }
 }
 

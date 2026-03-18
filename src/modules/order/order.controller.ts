@@ -67,6 +67,31 @@ export class OrderController {
       next(error);
     }
   }
+
+  async cancelOrder(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const id = req.params.id as string;
+      const data = await orderService.cancelOrder(id);
+
+      res.json({ success: true, message: 'Order berhasil dibatalkan', data });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async expireCheck(_req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await orderService.expireOverdueOrders();
+
+      res.json({
+        success: true,
+        message: `${result.expired_count} order telah diexpired`,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const orderController = new OrderController();

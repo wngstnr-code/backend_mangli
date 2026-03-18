@@ -40,3 +40,28 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction):
     });
   }
 };
+
+/**
+ * Middleware to check admin role (must be used AFTER authMiddleware)
+ */
+export const roleMiddleware = (...allowedRoles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.admin) {
+      res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+      return;
+    }
+
+    if (!allowedRoles.includes(req.admin.role)) {
+      res.status(403).json({
+        success: false,
+        message: 'Anda tidak memiliki akses untuk fitur ini.',
+      });
+      return;
+    }
+
+    next();
+  };
+};

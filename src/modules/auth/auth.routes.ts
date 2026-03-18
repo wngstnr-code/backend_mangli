@@ -20,5 +20,23 @@ router.post(
 
 // Protected
 router.get('/profile', authMiddleware, authController.getProfile);
+router.put(
+  '/profile',
+  authMiddleware,
+  validateRequiredFields(['current_password']),
+  authController.updateProfile
+);
+
+// Public: Password reset
+router.post(
+  '/forgot-password',
+  validateRequiredFields(['email']),
+  authController.forgotPassword
+);
+router.post(
+  '/reset-password',
+  validateRequiredFields(['token', 'new_password']),
+  authController.resetPassword
+);
 
 export default router;

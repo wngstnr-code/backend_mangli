@@ -32,3 +32,18 @@ export interface AuthResponse {
   admin: Omit<Admin, 'password'>;
   token: string;
 }
+
+export interface UpdateProfileDTO {
+  name?: string;
+  password?: string;
+  current_password: string;
+}
+
+export interface ForgotPasswordDTO {
+  email: string;
+}
+
+export interface ResetPasswordDTO {
+  token: string;
+  new_password: string;
+}
