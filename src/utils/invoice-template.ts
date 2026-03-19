@@ -155,7 +155,7 @@ export function generateInvoiceHTML(
       <!-- Footer -->
       <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; text-align: center;">
         <p style="margin: 0; font-size: 13px; color: #9ca3af;">Terima kasih telah memesan Tiket Kawasan Agroeduwisata Mangli!</p>
-        <p style="margin: 4px 0 0 0; font-size: 12px; color: #9ca3af;">Email ini dikirim otomatis, mohon tidak membalas email ini.</p>
+        <p style="margin: 4px 0 0 0; font-size: 10px; color: #9ca3af;">Email ini dikirim otomatis, mohon tidak membalas email ini.</p>
       </div>
     </div>
   </div>
