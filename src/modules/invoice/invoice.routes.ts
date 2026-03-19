@@ -5,7 +5,6 @@ import { authMiddleware } from '../../middlewares/auth';
 
 const router = Router();
 
-// Admin: Send invoice email
 router.post(
   '/',
   authMiddleware,

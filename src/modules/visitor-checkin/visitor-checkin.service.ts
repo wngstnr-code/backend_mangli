@@ -6,11 +6,7 @@ const TABLE = 'visitor_checkins';
 const ORDERS_TABLE = 'orders';
 
 export class VisitorCheckinService {
-  /**
-   * Record a visitor check-in for an order
-   */
   async checkin(dto: CreateVisitorCheckinDTO): Promise<VisitorCheckin> {
-    // Validate order exists and is paid/confirmed
     const { data: order, error: orderError } = await supabase
       .from(ORDERS_TABLE)
       .select('id, status, order_number')
@@ -28,7 +24,6 @@ export class VisitorCheckinService {
       );
     }
 
-    // Check if already checked in
     const { data: existing } = await supabase
       .from(TABLE)
       .select('id')
@@ -55,12 +50,9 @@ export class VisitorCheckinService {
     return data as VisitorCheckin;
   }
 
-  /**
-   * Process Check-in via QR Scan Data (JSON)
-   */
   async checkinByQR(qrDataStr: string, checkedInBy?: string): Promise<VisitorCheckin> {
     try {
-      const qrData = JSON.stringify(qrDataStr).replace(/\\/g, ''); // Basic sanitization if it's double stringified
+      const qrData = JSON.stringify(qrDataStr).replace(/\\/g, '');
       const parsed = JSON.parse(qrDataStr);
       
       if (!parsed || !parsed.order_id) {
@@ -69,7 +61,6 @@ export class VisitorCheckinService {
 
       const orderId = parsed.order_id;
       
-      // Calculate total visitors based on order items
       const { data: items, error: itemsError } = await supabase
         .from('order_items')
         .select('quantity')
@@ -81,7 +72,6 @@ export class VisitorCheckinService {
 
       const totalVisitors = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
-      // Call normal checkin method
       return this.checkin({
         order_id: orderId,
         number_of_visitors: totalVisitors || 1,
@@ -94,9 +84,6 @@ export class VisitorCheckinService {
     }
   }
 
-  /**
-   * Get check-in status for a specific order
-   */
   async getByOrderId(orderId: string): Promise<VisitorCheckin | null> {
     const { data, error } = await supabase
       .from(TABLE)
@@ -111,13 +98,10 @@ export class VisitorCheckinService {
     return (data as VisitorCheckin) || null;
   }
 
-  /**
-   * Get all check-ins with pagination and date filter
-   */
   async getAll(params: {
     page?: number;
     limit?: number;
-    date?: string; // YYYY-MM-DD
+    date?: string;
   }): Promise<{ data: VisitorCheckin[]; count: number }> {
     const { page = 1, limit = 10, date } = params;
     const offset = (page - 1) * limit;
@@ -129,7 +113,6 @@ export class VisitorCheckinService {
       .range(offset, offset + limit - 1);
 
     if (date) {
-      // Filter by date (start of day to end of day)
       const startOfDay = `${date}T00:00:00.000Z`;
       const endOfDay = `${date}T23:59:59.999Z`;
       query = query.gte('checked_in_at', startOfDay).lte('checked_in_at', endOfDay);
@@ -142,9 +125,6 @@ export class VisitorCheckinService {
     return { data: data as VisitorCheckin[], count: count || 0 };
   }
 
-  /**
-   * Get summary statistics for a specific date (or today)
-   */
   async getSummary(date?: string): Promise<VisitorCheckinSummary> {
     const targetDate = date || new Date().toISOString().split('T')[0];
     const startOfDay = `${targetDate}T00:00:00.000Z`;

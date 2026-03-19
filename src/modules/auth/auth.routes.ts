@@ -5,7 +5,6 @@ import { authMiddleware } from '../../middlewares/auth';
 
 const router = Router();
 
-// Public
 router.post(
   '/register',
   validateRequiredFields(['name', 'email', 'password']),
@@ -18,7 +17,6 @@ router.post(
   authController.login
 );
 
-// Protected
 router.get('/profile', authMiddleware, authController.getProfile);
 router.put(
   '/profile',
@@ -27,7 +25,6 @@ router.put(
   authController.updateProfile
 );
 
-// Public: Password reset
 router.post(
   '/forgot-password',
   validateRequiredFields(['email']),

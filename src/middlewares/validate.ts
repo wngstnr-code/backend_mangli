@@ -1,9 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 
-/**
- * Middleware factory untuk validasi required fields di request body.
- * @param requiredFields - array nama field yang wajib ada
- */
 export const validateRequiredFields = (requiredFields: string[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const missingFields: string[] = [];

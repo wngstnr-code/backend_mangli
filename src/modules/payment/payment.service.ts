@@ -10,9 +10,7 @@ import { invoiceService } from '../invoice/invoice.service';
 const TABLE = 'payments';
 
 export class PaymentService {
-  /**
-   * Create a Midtrans Snap payment
-   */
+
   async createMidtransPayment(orderId: string): Promise<Payment> {
     const order = await orderService.getById(orderId);
 
@@ -20,7 +18,7 @@ export class PaymentService {
       throw new AppError('Order sudah tidak bisa dibayar', 400);
     }
 
-    // Check if payment already exists
+
     const { data: existingPayment } = await supabase
       .from(TABLE)
       .select('*')
@@ -33,12 +31,12 @@ export class PaymentService {
       throw new AppError('Order sudah dibayar', 400);
     }
 
-    // If there's a pending midtrans payment, return the existing snap token
+
     if (existingPayment && existingPayment.snap_token) {
       return existingPayment as Payment;
     }
 
-    // Create Midtrans Snap transaction
+
     const parameter = {
       transaction_details: {
         order_id: order.order_number,
@@ -56,7 +54,6 @@ export class PaymentService {
 
     const midtransResponse = await snap.createTransaction(parameter);
 
-    // Set payment expiry 24 hours from now
     const expiredAt = new Date();
     expiredAt.setHours(expiredAt.getHours() + 24);
 
@@ -82,9 +79,6 @@ export class PaymentService {
     return payment as Payment;
   }
 
-  /**
-   * Create a cash payment (for walk-in / on-site payment)
-   */
   async createCashPayment(orderId: string, dto: CreateCashPaymentDTO): Promise<Payment> {
     const order = await orderService.getById(orderId);
 
@@ -112,28 +106,20 @@ export class PaymentService {
 
     if (error) throw new AppError(error.message, 500);
 
-    // Update order status to paid
     await orderService.updateStatus(orderId, { status: 'paid' });
 
-    // Send admin notification
     adminNotificationService
       .notifyPaymentReceived(order.order_number, dto.amount, orderId, 'cash')
       .catch((err) => console.error('Failed to send admin notification:', err));
 
-    // Send automated invoice email (fire-and-forget)
-    // Ticket was already sent at order creation for cash payments
     invoiceService.sendInvoice(orderId).catch(err => console.error('Auto invoice failed:', err));
 
     return payment as Payment;
   }
 
-  /**
-   * Handle Midtrans notification webhook
-   */
   async handleNotification(payload: MidtransNotificationPayload): Promise<Payment> {
     const { order_id, transaction_status, payment_type, transaction_id, fraud_status } = payload;
 
-    // Find payment by gateway_order_id
     const { data: payment, error: findError } = await supabase
       .from(TABLE)
       .select('*')
@@ -142,7 +128,6 @@ export class PaymentService {
 
     if (findError || !payment) throw new AppError('Payment tidak ditemukan', 404);
 
-    // Determine status
     let status = 'pending';
     let orderStatus = 'pending';
 
@@ -163,10 +148,8 @@ export class PaymentService {
       orderStatus = 'pending';
     }
 
-    // Extract VA number if exists
     const vaNumber = payload.va_numbers?.[0]?.va_number || null;
 
-    // Update payment
     const updateData: Record<string, unknown> = {
       gateway_transaction_id: transaction_id,
       payment_type,
@@ -190,18 +173,14 @@ export class PaymentService {
 
     if (updateError) throw new AppError(updateError.message, 500);
 
-    // Update order status
     await orderService.updateStatus(payment.order_id, { status: orderStatus });
 
-    // Send admin notification if payment is successful
     if (status === 'settlement') {
-      // Get order details for order number and total amount
       const order = await orderService.getById(payment.order_id);
       adminNotificationService
         .notifyPaymentReceived(order.order_number, Number(order.total_amount), payment.order_id, 'midtrans')
         .catch((err) => console.error('Failed to send admin notification:', err));
         
-      // Send automated invoice & ticket emails (fire-and-forget)
       invoiceService.sendInvoice(payment.order_id).catch(err => console.error('Auto invoice failed:', err));
       ticketService.sendTicketEmail(payment.order_id).catch(err => console.error('Auto ticket failed:', err));
     }
@@ -209,9 +188,6 @@ export class PaymentService {
     return updated as Payment;
   }
 
-  /**
-   * Get payment by order ID
-   */
   async getByOrderId(orderId: string): Promise<Payment[]> {
     const { data, error } = await supabase
       .from(TABLE)
@@ -224,9 +200,6 @@ export class PaymentService {
     return data as Payment[];
   }
 
-  /**
-   * Get payment by ID
-   */
   async getById(id: string): Promise<Payment> {
     const { data, error } = await supabase
       .from(TABLE)
@@ -239,9 +212,6 @@ export class PaymentService {
     return data as Payment;
   }
 
-  /**
-   * Get all payments with pagination
-   */
   async getAll(params: {
     page?: number;
     limit?: number;

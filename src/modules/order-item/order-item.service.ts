@@ -6,9 +6,6 @@ import { tourPackageService } from '../tour-package/tour-package.service';
 const TABLE = 'order_items';
 
 export class OrderItemService {
-  /**
-   * Get all items for a specific order
-   */
   async getByOrderId(orderId: string): Promise<OrderItem[]> {
     const { data, error } = await supabase
       .from(TABLE)
@@ -21,11 +18,7 @@ export class OrderItemService {
     return data as OrderItem[];
   }
 
-  /**
-   * Add an item to an order
-   */
   async create(orderId: string, dto: CreateOrderItemDTO): Promise<OrderItem> {
-    // Get tour package to calculate price
     const tourPackage = await tourPackageService.getById(dto.tour_package_id);
 
     if (!tourPackage.is_active) {
@@ -49,17 +42,12 @@ export class OrderItemService {
 
     if (error) throw new AppError(error.message, 500);
 
-    // Update order total_amount
     await this.recalculateOrderTotal(orderId);
 
     return data as OrderItem;
   }
 
-  /**
-   * Update an order item
-   */
   async update(id: string, dto: UpdateOrderItemDTO): Promise<OrderItem> {
-    // Get existing item
     const { data: existing, error: findError } = await supabase
       .from(TABLE)
       .select('*')
@@ -84,15 +72,11 @@ export class OrderItemService {
 
     if (error) throw new AppError(error.message, 500);
 
-    // Recalculate order total
     await this.recalculateOrderTotal(existing.order_id);
 
     return data as OrderItem;
   }
 
-  /**
-   * Delete an order item
-   */
   async delete(id: string): Promise<void> {
     const { data: existing, error: findError } = await supabase
       .from(TABLE)
@@ -109,13 +93,9 @@ export class OrderItemService {
 
     if (error) throw new AppError(error.message, 500);
 
-    // Recalculate order total
     await this.recalculateOrderTotal(existing.order_id);
   }
 
-  /**
-   * Recalculate and update order total_amount
-   */
   private async recalculateOrderTotal(orderId: string): Promise<void> {
     const { data: items, error } = await supabase
       .from(TABLE)

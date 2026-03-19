@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AdminPayload } from '../types/auth.types';
 
-// Extend Express Request to include admin info
 declare global {
   namespace Express {
     interface Request {
@@ -13,9 +12,6 @@ declare global {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-here';
 
-/**
- * Middleware to verify JWT token and protect admin routes
- */
 export const authMiddleware = (req: Request, res: Response, next: NextFunction): void => {
   const authHeader = req.headers.authorization;
 
@@ -41,9 +37,6 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction):
   }
 };
 
-/**
- * Middleware to check admin role (must be used AFTER authMiddleware)
- */
 export const roleMiddleware = (...allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.admin) {

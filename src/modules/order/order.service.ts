@@ -10,9 +10,6 @@ const TABLE = 'orders';
 const ORDER_ITEMS_TABLE = 'order_items';
 
 export class OrderService {
-  /**
-   * Create a new order with order items
-   */
   async create(dto: CreateOrderDTO): Promise<Order & { items: unknown[] }> {
     const { items, ...orderData } = dto;
 
@@ -27,7 +24,6 @@ export class OrderService {
       throw new AppError('Metode pembayaran tidak valid. Gunakan "midtrans" atau "cash".', 400);
     }
 
-    // Calculate total amount from items
     let totalAmount = 0;
     const itemDetails = [];
 
@@ -38,9 +34,8 @@ export class OrderService {
         throw new AppError(`Paket "${tourPackage.name}" sedang tidak aktif`, 400);
       }
 
-      // Validate visit_date against available_days
       const visitDate = new Date(orderData.visit_date);
-      const dayOfWeek = visitDate.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+      const dayOfWeek = visitDate.getDay();
 
       if (tourPackage.available_days && !tourPackage.available_days.includes(dayOfWeek)) {
         const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -50,8 +45,7 @@ export class OrderService {
         );
       }
 
-      // Validate visit_date against blocked_dates
-      const visitDateStr = orderData.visit_date; // format: YYYY-MM-DD
+      const visitDateStr = orderData.visit_date;
       if (tourPackage.blocked_dates && tourPackage.blocked_dates.includes(visitDateStr)) {
         throw new AppError(
           `Paket "${tourPackage.name}" tidak tersedia pada tanggal ${visitDateStr}`,
@@ -59,7 +53,6 @@ export class OrderService {
         );
       }
 
-      // Validate quota (max_participants) for this package on the visit_date
       const { data: bookedData } = await supabase
         .from('order_items')
         .select('quantity, orders!inner(visit_date, status)')
@@ -89,21 +82,16 @@ export class OrderService {
       });
     }
 
-    // Generate unique order number
     const orderNumber = generateOrderNumber();
 
-    // Set expiry based on payment method
     let expiredAt: Date;
     if (paymentMethod === 'cash') {
-      // Cash: expires at end of visit_date (23:59:59)
       expiredAt = new Date(`${orderData.visit_date}T23:59:59+07:00`);
     } else {
-      // Midtrans: expires 24 hours from now
       expiredAt = new Date();
       expiredAt.setHours(expiredAt.getHours() + 24);
     }
 
-    // Insert order
     const { data: order, error: orderError } = await supabase
       .from(TABLE)
       .insert({
@@ -120,7 +108,6 @@ export class OrderService {
 
     if (orderError) throw new AppError(orderError.message, 500);
 
-    // Insert order items
     const orderItems = itemDetails.map((item) => ({
       order_id: order.id,
       ...item,
@@ -133,12 +120,9 @@ export class OrderService {
 
     if (itemsError) throw new AppError(itemsError.message, 500);
 
-    // Send admin notification (fire-and-forget)
     adminNotificationService
       .notifyNewOrder(orderNumber, orderData.full_name, totalAmount, order.id)
       .catch((err) => console.error('Failed to send admin notification:', err));
-
-    // If payment method is cash, send the E-Ticket immediately (without invoice)
     if (paymentMethod === 'cash') {
       ticketService.sendTicketEmail(order.id).catch((err) => console.error('Failed to send auto-ticket for cash order:', err));
     }
@@ -146,9 +130,6 @@ export class OrderService {
     return { ...(order as Order), items: insertedItems || [] };
   }
 
-  /**
-   * Get all orders with pagination
-   */
   async getAll(params: {
     page?: number;
     limit?: number;
@@ -174,9 +155,6 @@ export class OrderService {
     return { data: data as Order[], count: count || 0 };
   }
 
-  /**
-   * Get order by ID with items
-   */
   async getById(id: string): Promise<Order & { items: unknown[] }> {
     const { data: order, error } = await supabase
       .from(TABLE)
@@ -186,7 +164,6 @@ export class OrderService {
 
     if (error || !order) throw new AppError('Order tidak ditemukan', 404);
 
-    // Get order items with tour package info
     const { data: items } = await supabase
       .from(ORDER_ITEMS_TABLE)
       .select('*, tour_packages(*)')
@@ -195,9 +172,6 @@ export class OrderService {
     return { ...(order as Order), items: items || [] };
   }
 
-  /**
-   * Get order by order number
-   */
   async getByOrderNumber(orderNumber: string): Promise<Order & { items: unknown[] }> {
     const { data: order, error } = await supabase
       .from(TABLE)
@@ -215,11 +189,7 @@ export class OrderService {
     return { ...(order as Order), items: items || [] };
   }
 
-  /**
-   * Update order status
-   */
   async updateStatus(id: string, dto: UpdateOrderStatusDTO): Promise<Order> {
-    // Check exists
     await this.getById(id);
 
     const updateData: Record<string, unknown> = {
@@ -243,9 +213,6 @@ export class OrderService {
     return data as Order;
   }
 
-  /**
-   * Cancel an order (only from pending status)
-   */
   async cancelOrder(id: string): Promise<Order> {
     const order = await this.getById(id);
 
@@ -268,9 +235,6 @@ export class OrderService {
     return data as Order;
   }
 
-  /**
-   * Expire all overdue pending orders (called by cron/manual trigger)
-   */
   async expireOverdueOrders(): Promise<{ expired_count: number }> {
     const now = new Date().toISOString();
 

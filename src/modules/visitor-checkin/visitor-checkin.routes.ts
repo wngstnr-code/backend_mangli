@@ -5,8 +5,6 @@ import { authMiddleware } from '../../middlewares/auth';
 
 const router = Router();
 
-// All routes require admin auth
-// Record check-in
 router.post(
   '/',
   authMiddleware,
@@ -14,7 +12,6 @@ router.post(
   visitorCheckinController.checkin
 );
 
-// Scan QR Check-in
 router.post(
   '/scan',
   authMiddleware,
@@ -22,13 +19,9 @@ router.post(
   visitorCheckinController.scan
 );
 
-// Get summary statistics
 router.get('/summary', authMiddleware, visitorCheckinController.getSummary);
 
-// Get all check-ins (with optional date filter)
 router.get('/', authMiddleware, visitorCheckinController.getAll);
-
-// Get check-in by order ID
 router.get('/order/:orderId', authMiddleware, visitorCheckinController.getByOrderId);
 
 export default router;

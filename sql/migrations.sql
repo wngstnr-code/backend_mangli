@@ -1,14 +1,5 @@
--- =============================================
--- Backend Mangli - SQL Migration
--- Database: Supabase (PostgreSQL)
--- =============================================
-
--- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- =============================================
--- Table: tour_packages
--- =============================================
 CREATE TABLE IF NOT EXISTS tour_packages (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
@@ -29,14 +20,9 @@ CREATE TABLE IF NOT EXISTS tour_packages (
     deleted_at TIMESTAMPTZ
 );
 
--- Index for slug lookup (public detail page)
 CREATE INDEX IF NOT EXISTS idx_tour_packages_slug ON tour_packages(slug);
--- Index for active packages
 CREATE INDEX IF NOT EXISTS idx_tour_packages_active ON tour_packages(is_active) WHERE deleted_at IS NULL;
 
--- =============================================
--- Table: orders
--- =============================================
 CREATE TABLE IF NOT EXISTS orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID,
@@ -55,14 +41,9 @@ CREATE TABLE IF NOT EXISTS orders (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Index for order number lookup
 CREATE INDEX IF NOT EXISTS idx_orders_order_number ON orders(order_number);
--- Index for status filtering
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 
--- =============================================
--- Table: order_items
--- =============================================
 CREATE TABLE IF NOT EXISTS order_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
@@ -74,12 +55,8 @@ CREATE TABLE IF NOT EXISTS order_items (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Index for order_id lookup
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
 
--- =============================================
--- Table: payments
--- =============================================
 CREATE TABLE IF NOT EXISTS payments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
@@ -104,16 +81,12 @@ CREATE TABLE IF NOT EXISTS payments (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Index for order lookup
 CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(order_id);
--- Index for status filtering
+
 CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
--- Index for gateway_order_id (Midtrans notification lookup)
+
 CREATE INDEX IF NOT EXISTS idx_payments_gateway_order_id ON payments(gateway_order_id);
 
--- =============================================
--- Table: visitor_checkins
--- =============================================
 CREATE TABLE IF NOT EXISTS visitor_checkins (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
@@ -124,14 +97,10 @@ CREATE TABLE IF NOT EXISTS visitor_checkins (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Index for order lookup
 CREATE INDEX IF NOT EXISTS idx_visitor_checkins_order_id ON visitor_checkins(order_id);
--- Unique constraint: one check-in per order
+
 CREATE UNIQUE INDEX IF NOT EXISTS idx_visitor_checkins_order_unique ON visitor_checkins(order_id);
 
--- =============================================
--- Table: admin_notifications
--- =============================================
 CREATE TABLE IF NOT EXISTS admin_notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     type TEXT NOT NULL DEFAULT 'new_order',
@@ -143,14 +112,10 @@ CREATE TABLE IF NOT EXISTS admin_notifications (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Index for unread notifications
 CREATE INDEX IF NOT EXISTS idx_admin_notifications_unread ON admin_notifications(is_read) WHERE is_read = FALSE;
--- Index for order lookup
+
 CREATE INDEX IF NOT EXISTS idx_admin_notifications_order_id ON admin_notifications(order_id);
 
--- =============================================
--- Table: admins
--- =============================================
 CREATE TABLE IF NOT EXISTS admins (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
@@ -165,5 +130,4 @@ CREATE TABLE IF NOT EXISTS admins (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Index for email lookup (login)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_admins_email ON admins(email);

@@ -10,11 +10,7 @@ export interface DashboardSummary {
 }
 
 export class DashboardService {
-  /**
-   * Get dashboard summary for a given period
-   */
   async getSummary(period: string = 'monthly', date?: string): Promise<DashboardSummary> {
-    // Determine date range
     const now = new Date();
     let startDate: string;
     let endDate: string;
@@ -30,7 +26,6 @@ export class DashboardService {
       startDate = `${startOfWeek.toISOString().split('T')[0]}T00:00:00.000Z`;
       endDate = now.toISOString();
     } else {
-      // monthly (default)
       const targetMonth = date || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
       const [year, month] = targetMonth.split('-');
       startDate = `${year}-${month}-01T00:00:00.000Z`;
@@ -38,7 +33,6 @@ export class DashboardService {
       endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}T23:59:59.999Z`;
     }
 
-    // Total revenue (from paid orders)
     const { data: revenueData, error: revenueError } = await supabase
       .from('orders')
       .select('total_amount')
@@ -50,7 +44,6 @@ export class DashboardService {
 
     const totalRevenue = revenueData?.reduce((sum, row) => sum + Number(row.total_amount), 0) || 0;
 
-    // Total orders count
     const { count: totalOrders, error: ordersError } = await supabase
       .from('orders')
       .select('*', { count: 'exact', head: true })
@@ -59,7 +52,6 @@ export class DashboardService {
 
     if (ordersError) throw new AppError(ordersError.message, 500);
 
-    // Total visitors
     const { data: visitorData, error: visitorError } = await supabase
       .from('visitor_checkins')
       .select('number_of_visitors')
@@ -70,7 +62,6 @@ export class DashboardService {
 
     const totalVisitors = visitorData?.reduce((sum, row) => sum + (row.number_of_visitors || 0), 0) || 0;
 
-    // Top packages (most sold)
     const { data: topData, error: topError } = await supabase
       .from('order_items')
       .select('tour_package_id, quantity, tour_packages(name), orders!inner(created_at, status)')
@@ -80,7 +71,6 @@ export class DashboardService {
 
     if (topError) throw new AppError(topError.message, 500);
 
-    // Aggregate top packages
     const packageMap = new Map<string, { name: string; total_sold: number }>();
     for (const row of topData || []) {
       const pkgId = row.tour_package_id;
@@ -98,7 +88,6 @@ export class DashboardService {
       .sort((a, b) => b.total_sold - a.total_sold)
       .slice(0, 5);
 
-    // Daily visitors breakdown
     const { data: dailyData, error: dailyError } = await supabase
       .from('visitor_checkins')
       .select('checked_in_at, number_of_visitors')

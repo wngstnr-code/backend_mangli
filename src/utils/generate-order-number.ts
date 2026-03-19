@@ -1,8 +1,3 @@
-/**
- * Generate unique order number.
- * Format: MGL-YYYYMMDD-XXXXXX (random 6 char alphanumeric uppercase)
- * Contoh: MGL-20260315-A3B7K2
- */
 export const generateOrderNumber = (): string => {
   const now = new Date();
   const year = now.getFullYear();

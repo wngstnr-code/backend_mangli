@@ -5,9 +5,6 @@ import { AppError } from '../../middlewares/error-handler';
 const TABLE = 'admin_notifications';
 
 export class AdminNotificationService {
-  /**
-   * Create a new notification
-   */
   async create(dto: CreateAdminNotificationDTO): Promise<AdminNotification> {
     const { data, error } = await supabase
       .from(TABLE)
@@ -25,9 +22,6 @@ export class AdminNotificationService {
     return data as AdminNotification;
   }
 
-  /**
-   * Get all notifications with pagination
-   */
   async getAll(params: {
     page?: number;
     limit?: number;
@@ -53,9 +47,6 @@ export class AdminNotificationService {
     return { data: data as AdminNotification[], count: count || 0 };
   }
 
-  /**
-   * Get unread count
-   */
   async getUnreadCount(): Promise<number> {
     const { count, error } = await supabase
       .from(TABLE)
@@ -67,9 +58,6 @@ export class AdminNotificationService {
     return count || 0;
   }
 
-  /**
-   * Mark a notification as read
-   */
   async markAsRead(id: string): Promise<AdminNotification> {
     const { data, error } = await supabase
       .from(TABLE)
@@ -87,9 +75,6 @@ export class AdminNotificationService {
     return data as AdminNotification;
   }
 
-  /**
-   * Mark all notifications as read
-   */
   async markAllAsRead(): Promise<{ message: string; count: number }> {
     const { data, error } = await supabase
       .from(TABLE)
@@ -108,9 +93,6 @@ export class AdminNotificationService {
     };
   }
 
-  /**
-   * Create notification for a new order (called from OrderService)
-   */
   async notifyNewOrder(orderNumber: string, fullName: string, totalAmount: number, orderId: string): Promise<void> {
     const formatCurrency = (amount: number): string =>
       new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
@@ -123,9 +105,6 @@ export class AdminNotificationService {
     });
   }
 
-  /**
-   * Create notification for a received payment (called from PaymentService)
-   */
   async notifyPaymentReceived(orderNumber: string, totalAmount: number, orderId: string, provider: string): Promise<void> {
     const formatCurrency = (amount: number): string =>
       new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);

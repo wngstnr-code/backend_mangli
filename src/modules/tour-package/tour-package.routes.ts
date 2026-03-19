@@ -5,11 +5,9 @@ import { authMiddleware } from '../../middlewares/auth';
 
 const router = Router();
 
-// Public routes
 router.get('/', tourPackageController.getAll);
 router.get('/:slug', tourPackageController.getBySlug);
 
-// Admin routes (protected)
 router.post(
   '/',
   authMiddleware,

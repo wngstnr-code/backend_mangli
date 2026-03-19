@@ -22,12 +22,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check
 app.get('/api/health', (_req, res) => {
   res.json({
     success: true,
@@ -36,7 +34,6 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tour-packages', tourPackageRoutes);
 app.use('/api/orders', orderRoutes);
@@ -49,15 +46,12 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/tickets', ticketRoutes);
 
-// Global error handler (must be last)
 app.use(errorHandler);
 
 app.listen(PORT,async () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/api/health`);
   await testConnection();
-  
-  // Start cron jobs
   startExpiredOrdersCron();
 });
 

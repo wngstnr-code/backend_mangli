@@ -5,9 +5,6 @@ import { AppError } from '../../middlewares/error-handler';
 const TABLE = 'tour_packages';
 
 export class TourPackageService {
-  /**
-   * Get all active tour packages with optional pagination & search
-   */
   async getAll(params: {
     page?: number;
     limit?: number;
@@ -44,9 +41,6 @@ export class TourPackageService {
     return { data: data as TourPackage[], count: count || 0 };
   }
 
-  /**
-   * Get a single tour package by slug (for public detail page)
-   */
   async getBySlug(slug: string): Promise<TourPackage> {
     const { data, error } = await supabase
       .from(TABLE)
@@ -60,9 +54,6 @@ export class TourPackageService {
     return data as TourPackage;
   }
 
-  /**
-   * Get a single tour package by ID
-   */
   async getById(id: string): Promise<TourPackage> {
     const { data, error } = await supabase
       .from(TABLE)
@@ -76,9 +67,6 @@ export class TourPackageService {
     return data as TourPackage;
   }
 
-  /**
-   * Create a new tour package
-   */
   async create(dto: CreateTourPackageDTO): Promise<TourPackage> {
     const { data, error } = await supabase
       .from(TABLE)
@@ -95,11 +83,7 @@ export class TourPackageService {
     return data as TourPackage;
   }
 
-  /**
-   * Update an existing tour package
-   */
   async update(id: string, dto: UpdateTourPackageDTO): Promise<TourPackage> {
-    // Check exists
     await this.getById(id);
 
     const { data, error } = await supabase
@@ -114,11 +98,7 @@ export class TourPackageService {
     return data as TourPackage;
   }
 
-  /**
-   * Soft delete a tour package
-   */
   async softDelete(id: string): Promise<void> {
-    // Check exists
     await this.getById(id);
 
     const { error } = await supabase

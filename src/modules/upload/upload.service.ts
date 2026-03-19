@@ -4,9 +4,6 @@ import { AppError } from '../../middlewares/error-handler';
 const BUCKET = 'tour-images';
 
 export class UploadService {
-  /**
-   * Upload image to Supabase Storage
-   */
   async uploadImage(file: Express.Multer.File): Promise<{ url: string; path: string }> {
     const fileName = `${Date.now()}-${file.originalname.replace(/\s/g, '-')}`;
     const filePath = `uploads/${fileName}`;
@@ -30,9 +27,6 @@ export class UploadService {
     };
   }
 
-  /**
-   * Delete image from Supabase Storage
-   */
   async deleteImage(filePath: string): Promise<void> {
     const { error } = await supabase.storage
       .from(BUCKET)

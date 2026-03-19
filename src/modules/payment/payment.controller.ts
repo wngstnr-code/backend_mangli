@@ -28,7 +28,6 @@ export class PaymentController {
     try {
       const data = await paymentService.handleNotification(req.body);
 
-      // Midtrans expects 200 OK response
       res.status(200).json({ success: true, data });
     } catch (error) {
       next(error);

@@ -12,11 +12,7 @@ const JWT_EXPIRES_IN = '7d';
 const SALT_ROUNDS = 10;
 
 export class AuthService {
-  /**
-   * Register a new admin
-   */
   async register(dto: AdminRegisterDTO): Promise<AuthResponse> {
-    // Check if email already exists
     const { data: existing } = await supabase
       .from(TABLE)
       .select('id')
@@ -27,7 +23,6 @@ export class AuthService {
       throw new AppError('Email sudah terdaftar', 409);
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(dto.password, SALT_ROUNDS);
 
     const { data, error } = await supabase
@@ -46,15 +41,11 @@ export class AuthService {
     const admin = data as Admin;
     const token = this.generateToken(admin);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...adminWithoutPassword } = admin;
 
     return { admin: adminWithoutPassword, token };
   }
 
-  /**
-   * Login admin
-   */
   async login(dto: AdminLoginDTO): Promise<AuthResponse> {
     const { data, error } = await supabase
       .from(TABLE)
@@ -72,14 +63,12 @@ export class AuthService {
       throw new AppError('Akun telah dinonaktifkan', 403);
     }
 
-    // Verify password
     const isValidPassword = await bcrypt.compare(dto.password, admin.password);
 
     if (!isValidPassword) {
       throw new AppError('Email atau password salah', 401);
     }
 
-    // Update last login
     await supabase
       .from(TABLE)
       .update({ last_login_at: new Date().toISOString() })
@@ -87,15 +76,11 @@ export class AuthService {
 
     const token = this.generateToken(admin);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...adminWithoutPassword } = admin;
 
     return { admin: adminWithoutPassword, token };
   }
 
-  /**
-   * Get current admin profile
-   */
   async getProfile(adminId: string): Promise<Omit<Admin, 'password'>> {
     const { data, error } = await supabase
       .from(TABLE)
@@ -110,9 +95,6 @@ export class AuthService {
     return data as Omit<Admin, 'password'>;
   }
 
-  /**
-   * Generate JWT token
-   */
   private generateToken(admin: Admin): string {
     const payload: AdminPayload = {
       id: admin.id,
@@ -123,11 +105,7 @@ export class AuthService {
     return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
   }
 
-  /**
-   * Update admin profile (name and/or password)
-   */
   async updateProfile(adminId: string, dto: UpdateProfileDTO): Promise<Omit<Admin, 'password'>> {
-    // Get current admin
     const { data: admin, error: fetchError } = await supabase
       .from(TABLE)
       .select('*')
@@ -136,7 +114,6 @@ export class AuthService {
 
     if (fetchError || !admin) throw new AppError('Admin tidak ditemukan', 404);
 
-    // Verify current password
     const isValid = await bcrypt.compare(dto.current_password, admin.password);
     if (!isValid) throw new AppError('Password saat ini salah', 401);
 
@@ -159,9 +136,6 @@ export class AuthService {
     return data as Omit<Admin, 'password'>;
   }
 
-  /**
-   * Send reset password email
-   */
   async forgotPassword(dto: ForgotPasswordDTO): Promise<{ message: string }> {
     const { data: admin } = await supabase
       .from(TABLE)
@@ -169,15 +143,12 @@ export class AuthService {
       .eq('email', dto.email)
       .single();
 
-    // Always return success even if email not found (security best practice)
     if (!admin) {
       return { message: 'Jika email terdaftar, link reset password telah dikirim.' };
     }
-
-    // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenExpires = new Date();
-    resetTokenExpires.setHours(resetTokenExpires.getHours() + 1); // 1 hour expiry
+    resetTokenExpires.setHours(resetTokenExpires.getHours() + 1);
 
     await supabase
       .from(TABLE)
@@ -187,7 +158,6 @@ export class AuthService {
       })
       .eq('id', admin.id);
 
-    // Send reset email
     await transporter.sendMail({
       from: SMTP_FROM,
       to: admin.email,
@@ -206,9 +176,6 @@ export class AuthService {
     return { message: 'Jika email terdaftar, link reset password telah dikirim.' };
   }
 
-  /**
-   * Reset password using token
-   */
   async resetPassword(dto: ResetPasswordDTO): Promise<{ message: string }> {
     const { data: admin, error } = await supabase
       .from(TABLE)
@@ -218,7 +185,6 @@ export class AuthService {
 
     if (error || !admin) throw new AppError('Token tidak valid', 400);
 
-    // Check if token expired
     if (new Date(admin.reset_token_expires) < new Date()) {
       throw new AppError('Token sudah kedaluwarsa', 400);
     }
