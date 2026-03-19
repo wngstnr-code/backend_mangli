@@ -16,7 +16,8 @@ export class PaymentController {
   async createCashPayment(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const orderId = req.params.orderId as string;
-      const data = await paymentService.createCashPayment(orderId, req.body);
+      const adminId = (req as any).admin.id;
+      const data = await paymentService.createCashPayment(orderId, req.body, adminId);
 
       res.status(201).json({ success: true, data });
     } catch (error) {

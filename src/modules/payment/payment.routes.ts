@@ -12,7 +12,7 @@ router.post('/midtrans/notification', paymentController.handleNotification);
 router.post(
   '/cash/:orderId',
   authMiddleware,
-  validateRequiredFields(['amount', 'received_by']),
+  validateRequiredFields(['amount']),
   paymentController.createCashPayment
 );
 

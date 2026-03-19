@@ -24,7 +24,6 @@ export interface Payment {
 
 export interface CreateCashPaymentDTO {
   amount: number;
-  received_by: string;
   receipt_number?: string;
   payment_channel?: string;
 }

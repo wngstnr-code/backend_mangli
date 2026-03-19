@@ -79,11 +79,19 @@ export class PaymentService {
     return payment as Payment;
   }
 
-  async createCashPayment(orderId: string, dto: CreateCashPaymentDTO): Promise<Payment> {
+  async createCashPayment(orderId: string, dto: CreateCashPaymentDTO, adminId: string): Promise<Payment> {
     const order = await orderService.getById(orderId);
 
     if (order.status !== 'pending') {
       throw new AppError('Order sudah tidak bisa dibayar', 400);
+    }
+
+    if (Number(dto.amount) < Number(order.total_amount)) {
+      throw new AppError(`Uang yang dibayarkan kurang. Total tagihan: Rp ${order.total_amount.toLocaleString('id-ID')}`, 400);
+    }
+
+    if (Number(dto.amount) > Number(order.total_amount)) {
+      throw new AppError(`Uang yang dibayarkan berlebih. Silakan masukkan nominal pas (Rp ${order.total_amount.toLocaleString('id-ID')})`, 400);
     }
 
     const { data: payment, error } = await supabase
@@ -97,7 +105,7 @@ export class PaymentService {
         status: 'settlement',
         amount: dto.amount,
         currency: 'IDR',
-        received_by: dto.received_by || null,
+        received_by: adminId,
         receipt_number: dto.receipt_number || null,
         paid_at: new Date().toISOString(),
       })
