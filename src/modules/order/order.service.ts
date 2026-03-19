@@ -4,6 +4,7 @@ import { AppError } from '../../middlewares/error-handler';
 import { generateOrderNumber } from '../../utils/generate-order-number';
 import { tourPackageService } from '../tour-package/tour-package.service';
 import { adminNotificationService } from '../admin-notification/admin-notification.service';
+import { ticketService } from '../ticket/ticket.service';
 
 const TABLE = 'orders';
 const ORDER_ITEMS_TABLE = 'order_items';
@@ -136,6 +137,11 @@ export class OrderService {
     adminNotificationService
       .notifyNewOrder(orderNumber, orderData.full_name, totalAmount, order.id)
       .catch((err) => console.error('Failed to send admin notification:', err));
+
+    // If payment method is cash, send the E-Ticket immediately (without invoice)
+    if (paymentMethod === 'cash') {
+      ticketService.sendTicketEmail(order.id).catch((err) => console.error('Failed to send auto-ticket for cash order:', err));
+    }
 
     return { ...(order as Order), items: insertedItems || [] };
   }

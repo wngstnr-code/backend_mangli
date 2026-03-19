@@ -14,6 +14,14 @@ router.post(
   visitorCheckinController.checkin
 );
 
+// Scan QR Check-in
+router.post(
+  '/scan',
+  authMiddleware,
+  validateRequiredFields(['qr_data']),
+  visitorCheckinController.scan
+);
+
 // Get summary statistics
 router.get('/summary', authMiddleware, visitorCheckinController.getSummary);
 

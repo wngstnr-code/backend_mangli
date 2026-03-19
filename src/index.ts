@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 
 import tourPackageRoutes from './modules/tour-package/tour-package.routes';
@@ -13,8 +12,10 @@ import adminNotificationRoutes from './modules/admin-notification/admin-notifica
 import authRoutes from './modules/auth/auth.routes';
 import dashboardRoutes from './modules/dashboard/dashboard.routes';
 import uploadRoutes from './modules/upload/upload.routes';
+import ticketRoutes from './modules/ticket/ticket.routes';
 import { errorHandler } from './middlewares/error-handler';
 import { testConnection } from './config/supabase';
+import { startExpiredOrdersCron } from './cron/expired-orders.cron';
 
 dotenv.config();
 
@@ -25,7 +26,6 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 
 // Health check
 app.get('/api/health', (_req, res) => {
@@ -47,6 +47,7 @@ app.use('/api/visitor-checkins', visitorCheckinRoutes);
 app.use('/api/admin-notifications', adminNotificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/tickets', ticketRoutes);
 
 // Global error handler (must be last)
 app.use(errorHandler);
@@ -55,6 +56,9 @@ app.listen(PORT,async () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/api/health`);
   await testConnection();
+  
+  // Start cron jobs
+  startExpiredOrdersCron();
 });
 
 export default app;

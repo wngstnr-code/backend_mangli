@@ -61,6 +61,18 @@ export class VisitorCheckinController {
       next(error);
     }
   }
+
+  async scan(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { qr_data } = req.body;
+      const adminId = req.admin?.id;
+
+      const data = await visitorCheckinService.checkinByQR(qr_data, adminId);
+      res.status(201).json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const visitorCheckinController = new VisitorCheckinController();

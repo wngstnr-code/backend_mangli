@@ -4,6 +4,8 @@ import { Payment, CreateCashPaymentDTO, MidtransNotificationPayload } from '../.
 import { AppError } from '../../middlewares/error-handler';
 import { orderService } from '../order/order.service';
 import { adminNotificationService } from '../admin-notification/admin-notification.service';
+import { ticketService } from '../ticket/ticket.service';
+import { invoiceService } from '../invoice/invoice.service';
 
 const TABLE = 'payments';
 
@@ -118,6 +120,10 @@ export class PaymentService {
       .notifyPaymentReceived(order.order_number, dto.amount, orderId, 'cash')
       .catch((err) => console.error('Failed to send admin notification:', err));
 
+    // Send automated invoice email (fire-and-forget)
+    // Ticket was already sent at order creation for cash payments
+    invoiceService.sendInvoice(orderId).catch(err => console.error('Auto invoice failed:', err));
+
     return payment as Payment;
   }
 
@@ -194,6 +200,10 @@ export class PaymentService {
       adminNotificationService
         .notifyPaymentReceived(order.order_number, Number(order.total_amount), payment.order_id, 'midtrans')
         .catch((err) => console.error('Failed to send admin notification:', err));
+        
+      // Send automated invoice & ticket emails (fire-and-forget)
+      invoiceService.sendInvoice(payment.order_id).catch(err => console.error('Auto invoice failed:', err));
+      ticketService.sendTicketEmail(payment.order_id).catch(err => console.error('Auto ticket failed:', err));
     }
 
     return updated as Payment;

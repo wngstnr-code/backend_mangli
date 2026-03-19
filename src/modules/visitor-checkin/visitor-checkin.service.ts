@@ -56,6 +56,45 @@ export class VisitorCheckinService {
   }
 
   /**
+   * Process Check-in via QR Scan Data (JSON)
+   */
+  async checkinByQR(qrDataStr: string, checkedInBy?: string): Promise<VisitorCheckin> {
+    try {
+      const qrData = JSON.stringify(qrDataStr).replace(/\\/g, ''); // Basic sanitization if it's double stringified
+      const parsed = JSON.parse(qrDataStr);
+      
+      if (!parsed || !parsed.order_id) {
+        throw new Error('Format QR tidak valid');
+      }
+
+      const orderId = parsed.order_id;
+      
+      // Calculate total visitors based on order items
+      const { data: items, error: itemsError } = await supabase
+        .from('order_items')
+        .select('quantity')
+        .eq('order_id', orderId);
+
+      if (itemsError || !items) {
+        throw new AppError('Gagal mengambil detail pesanan', 500);
+      }
+
+      const totalVisitors = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+
+      // Call normal checkin method
+      return this.checkin({
+        order_id: orderId,
+        number_of_visitors: totalVisitors || 1,
+        checked_in_by: checkedInBy,
+        notes: 'Check-in via QR Code Scan',
+      });
+    } catch (e: any) {
+      if (e instanceof AppError) throw e;
+      throw new AppError('Gagal memproses QR code: ' + e.message, 400);
+    }
+  }
+
+  /**
    * Get check-in status for a specific order
    */
   async getByOrderId(orderId: string): Promise<VisitorCheckin | null> {
