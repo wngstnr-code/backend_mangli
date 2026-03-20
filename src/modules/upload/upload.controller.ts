@@ -16,13 +16,22 @@ export class UploadController {
       next(error);
     }
   }
-
   async deleteImage(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { file_path } = req.body;
+      let { file_path, file_url } = req.body;
+
+      if (!file_path && file_url) {
+        const bucketName = 'tour-images';
+        const parts = file_url.split(`/${bucketName}/`);
+        if (parts.length > 1) {
+          file_path = parts[1];
+        } else {
+          file_path = file_url;
+        }
+      }
 
       if (!file_path) {
-        throw new AppError('file_path wajib diisi', 400);
+        throw new AppError('file_path atau file_url wajib diisi', 400);
       }
 
       await uploadService.deleteImage(file_path);

@@ -2,17 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { ticketService } from './ticket.service';
 
 export class TicketController {
-  async print(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const orderId = req.params.orderId as string;
-      const { html } = await ticketService.getTicketHTML(orderId);
-
-      res.setHeader('Content-Type', 'text/html');
-      res.send(html);
-    } catch (error) {
-      next(error);
-    }
-  }
 
   async send(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
