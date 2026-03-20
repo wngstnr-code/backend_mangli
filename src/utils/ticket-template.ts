@@ -65,8 +65,8 @@ export function generateTicketHTML(
     <div class="ticket-container" style="background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); margin-top: 20px;">
       
       <!-- Ticket Header -->
-      <div style="background: linear-gradient(135deg, #16e08c, #059669); color: #ffffff; padding: 20px; text-align: center;">
-        <h1 style="margin: 0; font-size: 28px; text-transform: uppercase; letter-spacing: 2px; color: #ffffff !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">E-TICKET</h1>
+      <div style="background: linear-gradient(135deg, #1B515E, #2D7A8B); color: #ffffff; padding: 20px; text-align: center;">
+        <h1 style="margin: 0; font-size: 28px; text-transform: uppercase; letter-spacing: 2px; color: #FBCB35 !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">E-TICKET</h1>
         <p style="margin: 6px 0 0 0; font-size: 14px; font-weight: bold; opacity: 0.9; color: #ffffff !important;">Kawasan Agroeduwisata Mangli</p>
       </div>
 
@@ -89,7 +89,7 @@ export function generateTicketHTML(
 
         <div style="margin-bottom: 20px;">
           <p style="margin: 0 0 4px 0; font-size: 12px; color: #6b7280; text-transform: uppercase;">Tanggal Kunjungan</p>
-          <p style="margin: 0; font-size: 16px; font-weight: bold; color: #059669;">${formatDate(order.visit_date)}</p>
+          <p style="margin: 0; font-size: 16px; font-weight: bold; color: #1B515E;">${formatDate(order.visit_date)}</p>
         </div>
 
         <!-- Package Details -->
@@ -103,7 +103,7 @@ export function generateTicketHTML(
 
 
       <!-- Ticket Footer (Tear-off line effect) -->
-      <div style="background: linear-gradient(135deg, #16e08c, #059669); padding: 12px; position: relative; text-align: center;">
+      <div style="background: linear-gradient(135deg, #1B515E, #2D7A8B); padding: 12px; position: relative; text-align: center;">
         <p style="margin: 0; font-size: 11px; font-weight: 500; color: #ffffff !important; opacity: 0.9;">Tunjukkan tiket ini kepada petugas di pintu masuk.</p>
       </div>
     </div>

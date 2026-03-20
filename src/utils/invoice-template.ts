@@ -50,8 +50,8 @@ export function generateInvoiceHTML(
   const statusLabel = (status: string): string => {
     const map: Record<string, { label: string; color: string }> = {
       pending: { label: 'Menunggu Pembayaran', color: '#d97706' },
-      paid: { label: 'Sudah Dibayar', color: '#059669' },
-      confirmed: { label: 'Dikonfirmasi', color: '#059669' },
+      paid: { label: 'Sudah Dibayar', color: '#1B515E' },
+      confirmed: { label: 'Dikonfirmasi', color: '#1B515E' },
       cancelled: { label: 'Dibatalkan', color: '#dc2626' },
       expired: { label: 'Kedaluwarsa', color: '#dc2626' },
     };
@@ -81,17 +81,17 @@ export function generateInvoiceHTML(
 <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <!-- Header -->
-    <div style="background: linear-gradient(135deg, #16e08c, #059669); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-      <h1 style="margin: 0; font-size: 32px; text-transform: uppercase; letter-spacing: 2px; color: #ffffff !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">INVOICE</h1>
+    <div style="background: linear-gradient(135deg, #1B515E, #2D7A8B); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+      <h1 style="margin: 0; font-size: 32px; text-transform: uppercase; letter-spacing: 2px; color: #FBCB35 !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">INVOICE</h1>
       <p style="margin: 8px 0 0 0; font-size: 15px; font-weight: bold; opacity: 0.9; color: #ffffff !important;">Kawasan Agroeduwisata Mangli</p>
     </div>
 
     <!-- Body -->
     <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
       <!-- Order Info -->
-      <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin-bottom: 24px; border-left: 4px solid #059669;">
+      <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin-bottom: 24px; border-left: 4px solid #8B2635;">
         <p style="margin: 0 0 4px 0; font-size: 13px; color: #64748b;">No. Order</p>
-        <p style="margin: 0; font-size: 18px; font-weight: bold; color: #059669;">${order.order_number}</p>
+        <p style="margin: 0; font-size: 18px; font-weight: bold; color: #1B515E;">${order.order_number}</p>
       </div>
 
       <table style="width: 100%; margin-bottom: 24px; font-size: 14px;">
@@ -139,9 +139,9 @@ export function generateInvoiceHTML(
       </table>
 
       <!-- Total -->
-      <div style="background: linear-gradient(135deg, #16e08c, #059669); color: #ffffff; padding: 16px; border-radius: 8px; text-align: right;">
+      <div style="background: linear-gradient(135deg, #1B515E, #2D7A8B); color: #ffffff; padding: 16px; border-radius: 8px; text-align: right; border-bottom: 4px solid #FBCB35;">
         <span style="font-size: 14px; opacity: 0.9; color: #ffffff !important;">Total Pembayaran</span>
-        <p style="margin: 4px 0 0 0; font-size: 24px; font-weight: bold; color: #ffffff !important;">${formatCurrency(order.total_amount)}</p>
+        <p style="margin: 4px 0 0 0; font-size: 24px; font-weight: bold; color: #FBCB35 !important;">${formatCurrency(order.total_amount)}</p>
       </div>
 
       ${order.status === 'pending' ? `
