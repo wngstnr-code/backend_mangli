@@ -23,7 +23,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -50,11 +55,29 @@ app.use('/api/package-prices', packagePriceRoutes);
 
 app.use(errorHandler);
 
-app.listen(PORT,async () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/api/health`);
-  await testConnection();
-  startExpiredOrdersCron();
-});
+// app.listen(PORT, async () => {
+//   console.log(`Server running on port ${PORT}`);
+//   console.log(`Health check: http://localhost:${PORT}/api/health`);
+//   await testConnection();
+//   startExpiredOrdersCron();
+// });
+
+
+// INFO DEPLOYMENT VERCEL:
+// Karena Vercel menggunakan arsitektur Serverless, idealnya kita tidak menggunakan app.listen().
+// Jika terjadi error saat deploy, uncomment block kode di bawah ini dan hapus app.listen di atas.
+
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, async () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Health check: http://localhost:${PORT}/api/health`);
+    await testConnection();
+    startExpiredOrdersCron();
+  });
+} else {
+  testConnection();
+  // Mode Serverless Vercel (Hanya inisialisasi koneksi tanpa listen)
+  // Catatan: Cron Job node-cron tidak bisa berjalan terus-menerus di Vercel.
+}
 
 export default app;
