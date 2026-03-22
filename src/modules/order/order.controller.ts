@@ -13,7 +13,6 @@ export class OrderController {
 
   async createOffline(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      // Endpoint ini hanya bisa diakses admin via authMiddleware
       const adminId = req.admin!.id;
       const data = await orderService.createOffline(req.body, adminId);
       res.status(201).json({ success: true, message: 'Pesanan offline sukses, tiket dikirim', data });
