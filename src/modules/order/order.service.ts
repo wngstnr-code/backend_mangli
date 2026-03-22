@@ -263,9 +263,15 @@ export class OrderService {
       received_by: adminId,
       paid_at: new Date().toISOString(),
     });
-
-    invoiceService.sendInvoice(order.id).catch(err => console.error('Auto invoice failed:', err));
-    ticketService.sendTicketEmail(order.id).catch(err => console.error('Auto ticket failed:', err));
+    
+    await Promise.allSettled([
+      invoiceService.sendInvoice(order.id),
+      ticketService.sendTicketEmail(order.id)
+    ]).then(results => {
+      results.forEach(res => {
+        if (res.status === 'rejected') console.error('Email failed:', res.reason);
+      });
+    });
 
     return { ...(order as Order), items: insertedItems || [] };
   }
