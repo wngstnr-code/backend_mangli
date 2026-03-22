@@ -198,9 +198,8 @@ export class AuthService {
       </p>
 
       <!-- Footer -->
-      <div style="margin-top: 32px; padding: 20px; background: linear-gradient(135deg, #1B515E, #2D7A8B); border-radius: 8px; text-align: center; border-bottom: 4px solid #FBCB35;">
-        <p style="margin: 0; font-size: 13px; font-weight: bold; color: #FBCB35;">Kawasan Agroeduwisata Mangli</p>
-        <p style="margin: 6px 0 0 0; font-size: 11px; color: #ffffff; letter-spacing: 0.5px; opacity: 0.9;">System Administration Management</p>
+      <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; text-align: center;">
+        <p style="margin: 0; font-size: 12px; color: #9ca3af;">Admin System - Kawasan Agroeduwisata Mangli</p>
       </div>
     </div>
   </div>
