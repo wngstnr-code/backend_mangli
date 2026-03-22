@@ -185,12 +185,16 @@ export class PaymentService {
 
     if (status === 'settlement') {
       const order = await orderService.getById(payment.order_id);
-      adminNotificationService
-        .notifyPaymentReceived(order.order_number, Number(order.total_amount), payment.order_id, 'midtrans')
-        .catch((err) => console.error('Failed to send admin notification:', err));
-        
-      invoiceService.sendInvoice(payment.order_id).catch(err => console.error('Auto invoice failed:', err));
-      ticketService.sendTicketEmail(payment.order_id).catch(err => console.error('Auto ticket failed:', err));
+      
+      await Promise.allSettled([
+        adminNotificationService.notifyPaymentReceived(order.order_number, Number(order.total_amount), payment.order_id, 'midtrans'),
+        invoiceService.sendInvoice(payment.order_id),
+        ticketService.sendTicketEmail(payment.order_id)
+      ]).then(results => {
+        results.forEach(res => {
+          if (res.status === 'rejected') console.error('Notification/Email failed:', res.reason);
+        });
+      });
     }
 
     return updated as Payment;
