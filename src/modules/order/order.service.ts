@@ -5,6 +5,7 @@ import { generateOrderNumber } from '../../utils/generate-order-number';
 import { tourPackageService } from '../tour-package/tour-package.service';
 import { adminNotificationService } from '../admin-notification/admin-notification.service';
 import { ticketService } from '../ticket/ticket.service';
+import { invoiceService } from '../invoice/invoice.service';
 
 const TABLE = 'orders';
 const ORDER_ITEMS_TABLE = 'order_items';
@@ -17,11 +18,16 @@ export class OrderService {
       throw new AppError('Minimal satu item harus ditambahkan', 400);
     }
 
-    const allowedPaymentMethods = ['midtrans', 'cash'];
-    const paymentMethod = orderData.payment_method || 'midtrans';
+    // METODE CASH SEMENTARA DINONAKTIFKAN UNTUK PUBLIC (HANYA MIDTRANS):
+    // Jika nanti Admin butuh, bisa dibuka kembali atau dibuatkan endpoint khusus
+    // const allowedPaymentMethods = ['midtrans', 'cash'];
+    const allowedPaymentMethods = ['midtrans'];
+    
+    // Default paksa midtrans untuk jaga-jaga
+    const paymentMethod = orderData.payment_method === 'cash' ? 'midtrans' : (orderData.payment_method || 'midtrans');
     
     if (!allowedPaymentMethods.includes(paymentMethod)) {
-      throw new AppError('Metode pembayaran tidak valid. Gunakan "midtrans" atau "cash".', 400);
+      throw new AppError('Metode pembayaran tidak valid. Saat ini hanya menerima "midtrans".', 400);
     }
 
     let totalAmount = 0;
@@ -96,12 +102,12 @@ export class OrderService {
     const orderNumber = generateOrderNumber();
 
     let expiredAt: Date;
-    if (paymentMethod === 'cash') {
-      expiredAt = new Date(`${orderData.visit_date}T23:59:59+07:00`);
-    } else {
+    // if (paymentMethod === 'cash') {
+    //   expiredAt = new Date(`${orderData.visit_date}T23:59:59+07:00`);
+    // } else {
       expiredAt = new Date();
       expiredAt.setHours(expiredAt.getHours() + 24);
-    }
+    // }
 
     const { data: order, error: orderError } = await supabase
       .from(TABLE)
@@ -134,9 +140,132 @@ export class OrderService {
     adminNotificationService
       .notifyNewOrder(orderNumber, orderData.full_name, totalAmount, order.id)
       .catch((err) => console.error('Failed to send admin notification:', err));
-    if (paymentMethod === 'cash') {
-      ticketService.sendTicketEmail(order.id).catch((err) => console.error('Failed to send auto-ticket for cash order:', err));
+      
+    // if (paymentMethod === 'cash') {
+    //   ticketService.sendTicketEmail(order.id).catch((err) => console.error('Failed to send auto-ticket for cash order:', err));
+    // }
+
+    return { ...(order as Order), items: insertedItems || [] };
+  }
+
+  async createOffline(dto: CreateOrderDTO, adminId: string): Promise<Order & { items: unknown[] }> {
+    const { items, ...orderData } = dto;
+
+    if (!items || items.length === 0) {
+      throw new AppError('Minimal satu item harus ditambahkan', 400);
     }
+
+    const paymentMethod = 'cash';
+
+    let totalAmount = 0;
+    const itemDetails = [];
+
+    for (const item of items) {
+      const tourPackage = await tourPackageService.getById(item.tour_package_id);
+
+      if (!tourPackage.is_active) {
+        throw new AppError(`Paket "${tourPackage.name}" sedang tidak aktif`, 400);
+      }
+
+      const visitDate = new Date(orderData.visit_date);
+      const dayOfWeek = visitDate.getDay();
+
+      if (tourPackage.available_days && !tourPackage.available_days.includes(dayOfWeek)) {
+        const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        throw new AppError(
+          `Paket "${tourPackage.name}" tidak tersedia di hari ${dayNames[dayOfWeek]}`,
+          400
+        );
+      }
+
+      const visitDateStr = orderData.visit_date;
+      if (tourPackage.blocked_dates && tourPackage.blocked_dates.includes(visitDateStr)) {
+        throw new AppError(
+          `Paket "${tourPackage.name}" tidak tersedia pada tanggal ${visitDateStr}`,
+          400
+        );
+      }
+
+      const { data: bookedData } = await supabase
+        .from('order_items')
+        .select('quantity, orders!inner(visit_date, status)')
+        .eq('tour_package_id', item.tour_package_id)
+        .eq('orders.visit_date', orderData.visit_date)
+        .in('orders.status', ['pending', 'paid']);
+
+      const totalBooked = bookedData?.reduce((sum: number, row: { quantity: number }) => sum + row.quantity, 0) || 0;
+
+      if (totalBooked + item.quantity > tourPackage.max_participants) {
+        const remaining = tourPackage.max_participants - totalBooked;
+        throw new AppError(
+          `Kuota penuh. Sisa kuota untuk pesanan Offline hari ini: ${remaining} tiket.`,
+          400
+        );
+      }
+
+      if (!(item as any).package_price_id) throw new AppError('Tipe tiket wajib dipilih', 400);
+
+      const selectedPrice = tourPackage.package_prices?.find(p => p.id === (item as any).package_price_id);
+      if (!selectedPrice) throw new AppError('Tipe tiket tidak valid', 400);
+
+      const unitPrice = selectedPrice.discount_price || selectedPrice.price;
+      const subtotal = unitPrice * item.quantity;
+      totalAmount += subtotal;
+
+      itemDetails.push({
+        tour_package_id: item.tour_package_id,
+        package_price_id: (item as any).package_price_id,
+        ticket_type_name: selectedPrice.name,
+        quantity: item.quantity,
+        unit_price: unitPrice,
+        subtotal,
+      });
+    }
+
+    const orderNumber = generateOrderNumber();
+
+    const { data: order, error: orderError } = await supabase
+      .from(TABLE)
+      .insert({
+        ...orderData,
+        order_number: orderNumber,
+        payment_method: paymentMethod,
+        visit_date: orderData.visit_date,
+        status: 'paid', // LANGSUNG LUNAS
+        total_amount: totalAmount,
+      })
+      .select()
+      .single();
+
+    if (orderError) throw new AppError(orderError.message, 500);
+
+    const orderItems = itemDetails.map((item) => ({
+      order_id: order.id,
+      ...item,
+    }));
+
+    const { data: insertedItems, error: itemsError } = await supabase
+      .from('order_items')
+      .insert(orderItems)
+      .select();
+
+    if (itemsError) throw new AppError(itemsError.message, 500);
+
+    await supabase.from('payments').insert({
+      order_id: order.id,
+      gateway_provider: 'cash',
+      gateway_order_id: orderNumber,
+      payment_type: 'cash',
+      payment_channel: 'counter',
+      status: 'settlement',
+      amount: totalAmount,
+      currency: 'IDR',
+      received_by: adminId,
+      paid_at: new Date().toISOString(),
+    });
+
+    invoiceService.sendInvoice(order.id).catch(err => console.error('Auto invoice failed:', err));
+    ticketService.sendTicketEmail(order.id).catch(err => console.error('Auto ticket failed:', err));
 
     return { ...(order as Order), items: insertedItems || [] };
   }

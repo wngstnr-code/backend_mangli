@@ -11,6 +11,13 @@ router.post(
   orderController.create
 );
 
+router.post(
+  '/offline',
+  authMiddleware,
+  validateRequiredFields(['full_name', 'phone_number', 'email', 'visit_date', 'items']),
+  orderController.createOffline
+);
+
 router.get('/number/:orderNumber', orderController.getByOrderNumber);
 
 router.get('/', authMiddleware, orderController.getAll);
