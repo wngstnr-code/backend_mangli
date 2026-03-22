@@ -44,6 +44,6 @@ export interface ForgotPasswordDTO {
 }
 
 export interface ResetPasswordDTO {
-  token: string;
+  otp: string;
   new_password: string;
 }

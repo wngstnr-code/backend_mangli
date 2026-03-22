@@ -146,9 +146,9 @@ export class AuthService {
     if (!admin) {
       return { message: 'Jika email terdaftar, link reset password telah dikirim.' };
     }
-    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetToken = Math.floor(100000 + Math.random() * 900000).toString(); 
     const resetTokenExpires = new Date();
-    resetTokenExpires.setHours(resetTokenExpires.getHours() + 1);
+    resetTokenExpires.setMinutes(resetTokenExpires.getMinutes() + 15); 
 
     await supabase
       .from(TABLE)
@@ -166,9 +166,9 @@ export class AuthService {
         <h2>Reset Password</h2>
         <p>Halo ${admin.name},</p>
         <p>Anda menerima email ini karena ada permintaan reset password untuk akun Anda.</p>
-        <p>Gunakan token berikut untuk mereset password Anda:</p>
-        <p style="font-size: 18px; font-weight: bold; background: #f0f0f0; padding: 10px; border-radius: 5px;">${resetToken}</p>
-        <p>Token ini berlaku selama 1 jam.</p>
+        <p>Gunakan kode OTP berikut untuk mereset password Anda:</p>
+        <p style="font-size: 24px; font-weight: bold; background: #f0f0f0; padding: 15px; border-radius: 5px; letter-spacing: 5px; text-align: center;">${resetToken}</p>
+        <p>Kode OTP ini berlaku selama 15 menit.</p>
         <p>Jika Anda tidak merasa melakukan permintaan ini, abaikan email ini.</p>
       `,
     });
@@ -180,13 +180,13 @@ export class AuthService {
     const { data: admin, error } = await supabase
       .from(TABLE)
       .select('id, reset_token, reset_token_expires')
-      .eq('reset_token', dto.token)
+      .eq('reset_token', dto.otp)
       .single();
 
-    if (error || !admin) throw new AppError('Token tidak valid', 400);
+    if (error || !admin) throw new AppError('Kode OTP tidak valid', 400);
 
     if (new Date(admin.reset_token_expires) < new Date()) {
-      throw new AppError('Token sudah kedaluwarsa', 400);
+      throw new AppError('Kode OTP sudah kedaluwarsa', 400);
     }
 
     const hashedPassword = await bcrypt.hash(dto.new_password, SALT_ROUNDS);

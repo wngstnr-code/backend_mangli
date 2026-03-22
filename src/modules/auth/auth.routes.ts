@@ -32,7 +32,7 @@ router.post(
 );
 router.post(
   '/reset-password',
-  validateRequiredFields(['token', 'new_password']),
+  validateRequiredFields(['otp', 'new_password']),
   authController.resetPassword
 );
 
