@@ -17,7 +17,7 @@ export class TourPackageService {
 
     let query = supabase
       .from(TABLE)
-      .select('*', { count: 'exact' })
+      .select('*, package_prices(*)', { count: 'exact' })
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
@@ -44,7 +44,7 @@ export class TourPackageService {
   async getBySlug(slug: string): Promise<TourPackage> {
     const { data, error } = await supabase
       .from(TABLE)
-      .select('*')
+      .select('*, package_prices(*)')
       .eq('slug', slug)
       .is('deleted_at', null)
       .single();
@@ -57,7 +57,7 @@ export class TourPackageService {
   async getById(id: string): Promise<TourPackage> {
     const { data, error } = await supabase
       .from(TABLE)
-      .select('*')
+      .select('*, package_prices(*)')
       .eq('id', id)
       .is('deleted_at', null)
       .single();
@@ -68,6 +68,14 @@ export class TourPackageService {
   }
 
   async create(dto: CreateTourPackageDTO): Promise<TourPackage> {
+    const { data: existing } = await supabase
+      .from(TABLE)
+      .select('id')
+      .eq('slug', dto.slug)
+      .single();
+
+    if (existing) throw new AppError('Slug sudah digunakan', 400);
+
     const { data, error } = await supabase
       .from(TABLE)
       .insert({
@@ -101,12 +109,19 @@ export class TourPackageService {
   async softDelete(id: string): Promise<void> {
     await this.getById(id);
 
-    const { error } = await supabase
+    const { error: packageError } = await supabase
       .from(TABLE)
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
 
-    if (error) throw new AppError(error.message, 500);
+    if (packageError) throw new AppError(packageError.message, 500);
+
+    const { error: pricesError } = await supabase
+      .from('package_prices')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('tour_package_id', id);
+
+    if (pricesError) console.error('Gagal menonaktifkan harga rincian:', pricesError.message);
   }
 }
 

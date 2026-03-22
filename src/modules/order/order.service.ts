@@ -70,12 +70,23 @@ export class OrderService {
         );
       }
 
-      const unitPrice = tourPackage.discount_price || tourPackage.price;
+      if (!(item as any).package_price_id) {
+        throw new AppError('Tipe tiket (package_price_id) wajib dipilih', 400);
+      }
+
+      const selectedPrice = tourPackage.package_prices?.find(p => p.id === (item as any).package_price_id);
+      if (!selectedPrice) {
+        throw new AppError(`Tipe tiket tidak valid untuk paket "${tourPackage.name}"`, 400);
+      }
+
+      const unitPrice = selectedPrice.discount_price || selectedPrice.price;
       const subtotal = unitPrice * item.quantity;
       totalAmount += subtotal;
 
       itemDetails.push({
         tour_package_id: item.tour_package_id,
+        package_price_id: (item as any).package_price_id,
+        ticket_type_name: selectedPrice.name,
         quantity: item.quantity,
         unit_price: unitPrice,
         subtotal,

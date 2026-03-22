@@ -13,6 +13,7 @@ import authRoutes from './modules/auth/auth.routes';
 import dashboardRoutes from './modules/dashboard/dashboard.routes';
 import uploadRoutes from './modules/upload/upload.routes';
 import ticketRoutes from './modules/ticket/ticket.routes';
+import packagePriceRoutes from './modules/package-price/package-price.routes';
 import { errorHandler } from './middlewares/error-handler';
 import { testConnection } from './config/supabase';
 import { startExpiredOrdersCron } from './cron/expired-orders.cron';
@@ -20,7 +21,7 @@ import { startExpiredOrdersCron } from './cron/expired-orders.cron';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 
 app.use(cors());
 app.use(express.json());
@@ -45,6 +46,7 @@ app.use('/api/admin-notifications', adminNotificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/package-prices', packagePriceRoutes);
 
 app.use(errorHandler);
 

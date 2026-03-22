@@ -25,7 +25,16 @@ export class OrderItemService {
       throw new AppError(`Paket "${tourPackage.name}" sedang tidak aktif`, 400);
     }
 
-    const unitPrice = tourPackage.discount_price || tourPackage.price;
+    if (!dto.package_price_id) {
+      throw new AppError('Tipe tiket (package_price_id) wajib dipilih', 400);
+    }
+
+    const selectedPrice = tourPackage.package_prices?.find(p => p.id === dto.package_price_id);
+    if (!selectedPrice) {
+      throw new AppError(`Tipe tiket tidak valid untuk paket "${tourPackage.name}"`, 400);
+    }
+
+    const unitPrice = selectedPrice.discount_price || selectedPrice.price;
     const subtotal = unitPrice * dto.quantity;
 
     const { data, error } = await supabase
@@ -33,6 +42,8 @@ export class OrderItemService {
       .insert({
         order_id: orderId,
         tour_package_id: dto.tour_package_id,
+        package_price_id: dto.package_price_id,
+        ticket_type_name: selectedPrice.name,
         quantity: dto.quantity,
         unit_price: unitPrice,
         subtotal,
