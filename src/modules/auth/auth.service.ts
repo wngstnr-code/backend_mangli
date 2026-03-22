@@ -163,13 +163,48 @@ export class AuthService {
       to: admin.email,
       subject: 'Reset Password - KAWAN Mangli',
       html: `
-        <h2>Reset Password</h2>
-        <p>Halo ${admin.name},</p>
-        <p>Anda menerima email ini karena ada permintaan reset password untuk akun Anda.</p>
-        <p>Gunakan kode OTP berikut untuk mereset password Anda:</p>
-        <p style="font-size: 24px; font-weight: bold; background: #f0f0f0; padding: 15px; border-radius: 5px; letter-spacing: 5px; text-align: center;">${resetToken}</p>
-        <p>Kode OTP ini berlaku selama 15 menit.</p>
-        <p>Jika Anda tidak merasa melakukan permintaan ini, abaikan email ini.</p>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #1B515E, #2D7A8B); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+      <h1 style="margin: 0; font-size: 28px; text-transform: uppercase; letter-spacing: 2px; color: #FBCB35 !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">RESET PASSWORD</h1>
+      <p style="margin: 8px 0 0 0; font-size: 15px; font-weight: bold; opacity: 0.9; color: #ffffff !important;">Kawasan Agroeduwisata Mangli</p>
+    </div>
+
+    <!-- Body -->
+    <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+      <p style="margin: 0 0 16px 0; font-size: 16px; color: #374151;">Halo <strong>${admin.name}</strong>,</p>
+      <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
+        Anda menerima email ini karena ada permintaan reset password untuk akun admin Anda. Silakan gunakan kode OTP di bawah ini untuk melanjutkan proses pemulihan akun.
+      </p>
+
+      <div style="background: #f1f5f9; padding: 24px; border-radius: 8px; text-align: center; border-left: 4px solid #FBCB35; margin-bottom: 24px;">
+        <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">KODE OTP ANDA</p>
+        <p style="margin: 0; font-size: 36px; font-weight: bold; color: #1B515E; letter-spacing: 8px;">${resetToken}</p>
+      </div>
+
+      <p style="margin: 0 0 16px 0; font-size: 14px; color: #dc2626;">
+        <strong>Penting:</strong> Kode OTP ini hanya berlaku selama <strong>15 menit</strong>. Jangan bagikan kode ini kepada siapa pun!
+      </p>
+
+      <p style="margin: 0; font-size: 14px; color: #6b7280; line-height: 1.5;">
+        Jika Anda tidak merasa melakukan permintaan ini, silakan abaikan pesan ini. Akun Anda tetap aman.
+      </p>
+
+      <!-- Footer -->
+      <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; text-align: center;">
+        <p style="margin: 0; font-size: 12px; color: #9ca3af;">Admin System - Kawasan Agroeduwisata Mangli</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
       `,
     });
 
