@@ -5,9 +5,9 @@ import { authMiddleware } from '../../middlewares/auth';
 
 const router = Router();
 
-router.post('/midtrans/:orderId', paymentController.createMidtransPayment);
-
 router.post('/midtrans/notification', paymentController.handleNotification);
+
+router.post('/midtrans/:orderId', paymentController.createMidtransPayment);
 
 router.post(
   '/cash/:orderId',
