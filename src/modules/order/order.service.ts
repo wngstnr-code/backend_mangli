@@ -23,7 +23,6 @@ export class OrderService {
     // const allowedPaymentMethods = ['midtrans', 'cash'];
     const allowedPaymentMethods = ['midtrans'];
     
-    // Default paksa midtrans untuk jaga-jaga
     const paymentMethod = orderData.payment_method === 'cash' ? 'midtrans' : (orderData.payment_method || 'midtrans');
     
     if (!allowedPaymentMethods.includes(paymentMethod)) {
