@@ -164,42 +164,67 @@ export class AuthService {
       subject: 'Reset Password - KAWAN Mangli',
       html: `
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Password - KAWAN Mangli</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <!-- Header -->
-    <div style="background: linear-gradient(135deg, #1B515E, #2D7A8B); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-      <h1 style="margin: 0; font-size: 28px; text-transform: uppercase; letter-spacing: 2px; color: #FBCB35 !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">RESET PASSWORD</h1>
-      <p style="margin: 8px 0 0 0; font-size: 15px; font-weight: bold; opacity: 0.9; color: #ffffff !important;">Kawasan Agroeduwisata Mangli</p>
-    </div>
-
-    <!-- Body -->
-    <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-      <p style="margin: 0 0 16px 0; font-size: 16px; color: #374151;">Halo <strong>${admin.name}</strong>,</p>
-      <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
-        Anda menerima email ini karena ada permintaan reset password untuk akun admin Anda. Silakan gunakan kode OTP di bawah ini untuk melanjutkan proses pemulihan akun.
-      </p>
-
-      <div style="background: #f1f5f9; padding: 24px; border-radius: 8px; text-align: center; border-left: 4px solid #FBCB35; margin-bottom: 24px;">
-        <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">KODE OTP ANDA</p>
-        <p style="margin: 0; font-size: 36px; font-weight: bold; color: #1B515E; letter-spacing: 8px;">${resetToken}</p>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <div style="width: 100%; table-layout: fixed; background-color: #f1f5f9; padding-bottom: 40px;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; margin-top: 40px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);">
+      
+      <!-- Brand Header -->
+      <div style="background-color: #1b515e; background-image: linear-gradient(135deg, #1b515e 0%, #2a7a8b 100%); padding: 40px 20px; text-align: center;">
+        <div style="display: inline-block; padding: 8px 16px; background-color: rgba(255, 255, 255, 0.1); border-radius: 8px; margin-bottom: 16px;">
+          <span style="color: #fbcb35; font-weight: 800; font-size: 14px; letter-spacing: 3px; text-transform: uppercase;">KAWAN MANGLI</span>
+        </div>
+        <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Pemulihan Kata Sandi</h1>
       </div>
 
-      <p style="margin: 0 0 16px 0; font-size: 14px; color: #dc2626;">
-        <strong>Penting:</strong> Kode OTP ini hanya berlaku selama <strong>15 menit</strong>. Jangan bagikan kode ini kepada siapa pun!
-      </p>
+      <!-- Main Content -->
+      <div style="padding: 40px 32px;">
+        <p style="margin: 0 0 16px; font-size: 18px; color: #1e293b; font-weight: 600;">Halo, ${admin.name}!</p>
+        <p style="margin: 0 0 32px; font-size: 16px; color: #475569; line-height: 1.6;">
+          Kami menerima permintaan untuk menyetel ulang kata sandi akun Admin Anda. Jangan khawatir, kami akan membantu Anda kembali masuk dengan aman.
+        </p>
 
-      <p style="margin: 0; font-size: 14px; color: #6b7280; line-height: 1.5;">
-        Jika Anda tidak merasa melakukan permintaan ini, silakan abaikan pesan ini. Akun Anda tetap aman.
-      </p>
+        <!-- OTP Box -->
+        <div style="background-color: #f8fafc; border: 2px dashed #e2e8f0; border-radius: 12px; padding: 32px 20px; text-align: center; margin-bottom: 32px;">
+          <p style="margin: 0 0 12px; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 2px;">KODE VERIFIKASI ANDA</p>
+          <div style="display: inline-block; background-color: #ffffff; padding: 16px 32px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+            <span style="font-family: 'Courier New', Courier, monospace; font-size: 42px; font-weight: 800; color: #1b515e; letter-spacing: 12px; margin-left: 12px;">${resetToken}</span>
+          </div>
+          <p style="margin: 20px 0 0; font-size: 14px; color: #64748b;">
+            Berlaku hingga <span style="color: #1b515e; font-weight: 600;">15 menit</span> ke depan
+          </p>
+        </div>
+
+        <!-- Security Notice -->
+        <div style="background-color: #fffbeb; border-radius: 8px; padding: 16px; margin-bottom: 32px; border-left: 4px solid #fbcb35;">
+          <table border="0" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="vertical-align: top; padding-right: 12px;">
+                <span style="font-size: 20px;">⚠️</span>
+              </td>
+              <td>
+                <p style="margin: 0; font-size: 14px; color: #92400e; line-height: 1.5;">
+                  <strong>Rahasiakan kode ini.</strong> Staf Kawasan Mangli tidak akan pernah meminta kode OTP Anda melalui Telepon, Email, atau WhatsApp.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <p style="margin: 0; font-size: 14px; color: #94a3b8; line-height: 1.6;">
+          Jika Anda tidak merasa melakukan permintaan ini, silakan abaikan email ini dengan aman. Tombol reset akan kedaluwarsa secara otomatis.
+        </p>
+      </div>
 
       <!-- Footer -->
-      <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; text-align: center;">
-        <p style="margin: 0; font-size: 12px; color: #9ca3af;">Admin System - Kawasan Agroeduwisata Mangli</p>
+      <div style="background-color: #f8fafc; padding: 32px; border-top: 1px solid #f1f5f9; text-align: center;">
+        <p style="margin: 0 0 8px; font-size: 12px; color: #64748b; font-weight: 600;">Sistem Admin Otomatis</p>
+        <p style="margin: 0; font-size: 12px; color: #94a3b8;">&copy; 2026 Kawasan Agroeduwisata Mangli. All rights reserved.</p>
       </div>
     </div>
   </div>
