@@ -2,7 +2,6 @@ import { supabase } from '../../config/supabase';
 import { CreateOrderDTO, Order, UpdateOrderStatusDTO } from '../../types/order.types';
 import { AppError } from '../../middlewares/error-handler';
 import { generateOrderNumber } from '../../utils/generate-order-number';
-import { tourPackageService } from '../tour-package/tour-package.service';
 import { adminNotificationService } from '../admin-notification/admin-notification.service';
 import { ticketService } from '../ticket/ticket.service';
 import { invoiceService } from '../invoice/invoice.service';
@@ -22,81 +21,14 @@ export class OrderService {
     // Jika nanti Admin butuh, bisa dibuka kembali atau dibuatkan endpoint khusus
     // const allowedPaymentMethods = ['midtrans', 'cash'];
     const allowedPaymentMethods = ['midtrans'];
-    
+
     const paymentMethod = orderData.payment_method === 'cash' ? 'midtrans' : (orderData.payment_method || 'midtrans');
-    
+
     if (!allowedPaymentMethods.includes(paymentMethod)) {
       throw new AppError('Metode pembayaran tidak valid. Saat ini hanya menerima "midtrans".', 400);
     }
 
-    let totalAmount = 0;
-    const itemDetails = [];
-
-    for (const item of items) {
-      const tourPackage = await tourPackageService.getById(item.tour_package_id);
-
-      if (!tourPackage.is_active) {
-        throw new AppError(`Paket "${tourPackage.name}" sedang tidak aktif`, 400);
-      }
-
-      const visitDate = new Date(orderData.visit_date);
-      const dayOfWeek = visitDate.getDay();
-
-      if (tourPackage.available_days && !tourPackage.available_days.includes(dayOfWeek)) {
-        const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-        throw new AppError(
-          `Paket "${tourPackage.name}" tidak tersedia di hari ${dayNames[dayOfWeek]}`,
-          400
-        );
-      }
-
-      const visitDateStr = orderData.visit_date;
-      if (tourPackage.blocked_dates && tourPackage.blocked_dates.includes(visitDateStr)) {
-        throw new AppError(
-          `Paket "${tourPackage.name}" tidak tersedia pada tanggal ${visitDateStr}`,
-          400
-        );
-      }
-
-      const { data: bookedData } = await supabase
-        .from('order_items')
-        .select('quantity, orders!inner(visit_date, status)')
-        .eq('tour_package_id', item.tour_package_id)
-        .eq('orders.visit_date', orderData.visit_date)
-        .in('orders.status', ['pending', 'paid']);
-
-      const totalBooked = bookedData?.reduce((sum: number, row: { quantity: number }) => sum + row.quantity, 0) || 0;
-
-      if (totalBooked + item.quantity > tourPackage.max_participants) {
-        const remaining = tourPackage.max_participants - totalBooked;
-        throw new AppError(
-          `Kuota paket "${tourPackage.name}" pada tanggal ${visitDateStr} tidak mencukupi. Sisa kuota: ${remaining} orang.`,
-          400
-        );
-      }
-
-      if (!(item as any).package_price_id) {
-        throw new AppError('Tipe tiket (package_price_id) wajib dipilih', 400);
-      }
-
-      const selectedPrice = tourPackage.package_prices?.find(p => p.id === (item as any).package_price_id);
-      if (!selectedPrice) {
-        throw new AppError(`Tipe tiket tidak valid untuk paket "${tourPackage.name}"`, 400);
-      }
-
-      const unitPrice = selectedPrice.discount_price || selectedPrice.price;
-      const subtotal = unitPrice * item.quantity;
-      totalAmount += subtotal;
-
-      itemDetails.push({
-        tour_package_id: item.tour_package_id,
-        package_price_id: (item as any).package_price_id,
-        ticket_type_name: selectedPrice.name,
-        quantity: item.quantity,
-        unit_price: unitPrice,
-        subtotal,
-      });
-    }
+    const { totalAmount, itemDetails } = await this._buildItemDetails(items, orderData.visit_date);
 
     const orderNumber = generateOrderNumber();
 
@@ -104,8 +36,8 @@ export class OrderService {
     // if (paymentMethod === 'cash') {
     //   expiredAt = new Date(`${orderData.visit_date}T23:59:59+07:00`);
     // } else {
-      expiredAt = new Date();
-      expiredAt.setHours(expiredAt.getHours() + 24);
+    expiredAt = new Date();
+    expiredAt.setHours(expiredAt.getHours() + 24);
     // }
 
     const { data: order, error: orderError } = await supabase
@@ -139,7 +71,7 @@ export class OrderService {
     adminNotificationService
       .notifyNewOrder(orderNumber, orderData.full_name, totalAmount, order.id)
       .catch((err) => console.error('Failed to send admin notification:', err));
-      
+
     // if (paymentMethod === 'cash') {
     //   ticketService.sendTicketEmail(order.id).catch((err) => console.error('Failed to send auto-ticket for cash order:', err));
     // }
@@ -156,70 +88,7 @@ export class OrderService {
 
     const paymentMethod = 'cash';
 
-    let totalAmount = 0;
-    const itemDetails = [];
-
-    for (const item of items) {
-      const tourPackage = await tourPackageService.getById(item.tour_package_id);
-
-      if (!tourPackage.is_active) {
-        throw new AppError(`Paket "${tourPackage.name}" sedang tidak aktif`, 400);
-      }
-
-      const visitDate = new Date(orderData.visit_date);
-      const dayOfWeek = visitDate.getDay();
-
-      if (tourPackage.available_days && !tourPackage.available_days.includes(dayOfWeek)) {
-        const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-        throw new AppError(
-          `Paket "${tourPackage.name}" tidak tersedia di hari ${dayNames[dayOfWeek]}`,
-          400
-        );
-      }
-
-      const visitDateStr = orderData.visit_date;
-      if (tourPackage.blocked_dates && tourPackage.blocked_dates.includes(visitDateStr)) {
-        throw new AppError(
-          `Paket "${tourPackage.name}" tidak tersedia pada tanggal ${visitDateStr}`,
-          400
-        );
-      }
-
-      const { data: bookedData } = await supabase
-        .from('order_items')
-        .select('quantity, orders!inner(visit_date, status)')
-        .eq('tour_package_id', item.tour_package_id)
-        .eq('orders.visit_date', orderData.visit_date)
-        .in('orders.status', ['pending', 'paid']);
-
-      const totalBooked = bookedData?.reduce((sum: number, row: { quantity: number }) => sum + row.quantity, 0) || 0;
-
-      if (totalBooked + item.quantity > tourPackage.max_participants) {
-        const remaining = tourPackage.max_participants - totalBooked;
-        throw new AppError(
-          `Kuota penuh. Sisa kuota untuk pesanan Offline hari ini: ${remaining} tiket.`,
-          400
-        );
-      }
-
-      if (!(item as any).package_price_id) throw new AppError('Tipe tiket wajib dipilih', 400);
-
-      const selectedPrice = tourPackage.package_prices?.find(p => p.id === (item as any).package_price_id);
-      if (!selectedPrice) throw new AppError('Tipe tiket tidak valid', 400);
-
-      const unitPrice = selectedPrice.discount_price || selectedPrice.price;
-      const subtotal = unitPrice * item.quantity;
-      totalAmount += subtotal;
-
-      itemDetails.push({
-        tour_package_id: item.tour_package_id,
-        package_price_id: (item as any).package_price_id,
-        ticket_type_name: selectedPrice.name,
-        quantity: item.quantity,
-        unit_price: unitPrice,
-        subtotal,
-      });
-    }
+    const { totalAmount, itemDetails } = await this._buildItemDetails(items, orderData.visit_date);
 
     const orderNumber = generateOrderNumber();
 
@@ -262,17 +131,115 @@ export class OrderService {
       received_by: adminId,
       paid_at: new Date().toISOString(),
     });
-    
+
     await Promise.allSettled([
       invoiceService.sendInvoice(order.id),
-      ticketService.sendTicketEmail(order.id)
-    ]).then(results => {
-      results.forEach(res => {
+      ticketService.sendTicketEmail(order.id),
+    ]).then((results) => {
+      results.forEach((res) => {
         if (res.status === 'rejected') console.error('Email failed:', res.reason);
       });
     });
 
     return { ...(order as Order), items: insertedItems || [] };
+  }
+
+  private async _buildItemDetails(
+    items: CreateOrderDTO['items'],
+    visitDate: string,
+  ): Promise<{ totalAmount: number; itemDetails: object[] }> {
+    const pkgIds = [...new Set(items.map((i) => i.tour_package_id))];
+
+    const { data: packages, error: pkgError } = await supabase
+      .from('tour_packages')
+      .select('*, package_prices(*)')
+      .in('id', pkgIds)
+      .is('deleted_at', null);
+
+    if (pkgError) throw new AppError(pkgError.message, 500);
+
+    const packageMap = new Map(
+      (packages || []).map((p: any) => [p.id as string, p]),
+    );
+
+    const { data: bookedData } = await supabase
+      .from('order_items')
+      .select('tour_package_id, quantity, orders!inner(visit_date, status)')
+      .in('tour_package_id', pkgIds)
+      .eq('orders.visit_date', visitDate)
+      .in('orders.status', ['pending', 'paid']);
+
+    const bookedMap = new Map<string, number>();
+    for (const row of bookedData || []) {
+      const prev = bookedMap.get(row.tour_package_id) || 0;
+      bookedMap.set(row.tour_package_id, prev + row.quantity);
+    }
+
+    let totalAmount = 0;
+    const itemDetails: object[] = [];
+    const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const dayOfWeek = new Date(visitDate).getDay();
+
+    for (const item of items) {
+      const tourPackage = packageMap.get(item.tour_package_id) as any;
+
+      if (!tourPackage) {
+        throw new AppError(`Paket wisata tidak ditemukan: ${item.tour_package_id}`, 404);
+      }
+
+      if (!tourPackage.is_active) {
+        throw new AppError(`Paket "${tourPackage.name}" sedang tidak aktif`, 400);
+      }
+
+      if (tourPackage.available_days && !tourPackage.available_days.includes(dayOfWeek)) {
+        throw new AppError(
+          `Paket "${tourPackage.name}" tidak tersedia di hari ${dayNames[dayOfWeek]}`,
+          400,
+        );
+      }
+
+      if (tourPackage.blocked_dates && tourPackage.blocked_dates.includes(visitDate)) {
+        throw new AppError(
+          `Paket "${tourPackage.name}" tidak tersedia pada tanggal ${visitDate}`,
+          400,
+        );
+      }
+
+      const totalBooked = bookedMap.get(item.tour_package_id) || 0;
+      if (totalBooked + item.quantity > tourPackage.max_participants) {
+        const remaining = tourPackage.max_participants - totalBooked;
+        throw new AppError(
+          `Kuota paket "${tourPackage.name}" pada tanggal ${visitDate} tidak mencukupi. Sisa kuota: ${remaining} orang.`,
+          400,
+        );
+      }
+
+      if (!(item as any).package_price_id) {
+        throw new AppError('Tipe tiket (package_price_id) wajib dipilih', 400);
+      }
+
+      const selectedPrice = tourPackage.package_prices?.find(
+        (p: any) => p.id === (item as any).package_price_id,
+      );
+      if (!selectedPrice) {
+        throw new AppError(`Tipe tiket tidak valid untuk paket "${tourPackage.name}"`, 400);
+      }
+
+      const unitPrice = selectedPrice.discount_price || selectedPrice.price;
+      const subtotal = unitPrice * item.quantity;
+      totalAmount += subtotal;
+
+      itemDetails.push({
+        tour_package_id: item.tour_package_id,
+        package_price_id: (item as any).package_price_id,
+        ticket_type_name: selectedPrice.name,
+        quantity: item.quantity,
+        unit_price: unitPrice,
+        subtotal,
+      });
+    }
+
+    return { totalAmount, itemDetails };
   }
 
   async getAll(params: {

@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 
 import tourPackageRoutes from './modules/tour-package/tour-package.routes';
@@ -21,13 +23,28 @@ import { startExpiredOrdersCron } from './cron/expired-orders.cron';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1); // Trust proxy agar rate limit bisa baca IP asli di Vercel/VPS
 const PORT = process.env.PORT || 8000;
 
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+
+if (!process.env.FRONTEND_URL) {
+  console.warn('[WARN] FRONTEND_URL tidak diset di .env — CORS akan menolak semua origin browser!');
+}
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: process.env.FRONTEND_URL || false,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true
 }));
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Terlalu banyak request, coba lagi nanti.' },
+});
+app.use('/api/', limiter);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

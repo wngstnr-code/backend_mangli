@@ -19,6 +19,12 @@ export const errorHandler = (
   _next: NextFunction
 ): void => {
   if (err instanceof AppError) {
+    if (err.statusCode >= 500) {
+      console.error(`[AppError] ${err.statusCode} - ${err.message}`, err.stack);
+    } else {
+      console.warn(`[AppWarning] ${err.statusCode} - ${err.message}`);
+    }
+
     res.status(err.statusCode).json({
       success: false,
       message: err.message,
@@ -26,7 +32,7 @@ export const errorHandler = (
     return;
   }
 
-  console.error('Unexpected error:', err);
+  console.error('[UnexpectedError]', err);
   res.status(500).json({
     success: false,
     message: err.message || 'Internal server error',
