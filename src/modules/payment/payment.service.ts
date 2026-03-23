@@ -42,20 +42,24 @@ export class PaymentService {
         order_id: order.order_number,
         gross_amount: Number(order.total_amount),
       },
+      expiry: {
+        unit: 'minutes',
+        duration: 60,
+      },
       customer_details: {
         first_name: order.full_name,
         email: order.email,
         phone: order.phone_number,
       },
       callbacks: {
-        finish: process.env.MIDTRANS_FINISH_REDIRECT_URL || 'https://example.com/finish',
+        finish: process.env.MIDTRANS_FINISH_REDIRECT_URL
       },
     };
 
     const midtransResponse = await snap.createTransaction(parameter);
 
     const expiredAt = new Date();
-    expiredAt.setHours(expiredAt.getHours() + 24);
+    expiredAt.setMinutes(expiredAt.getMinutes() + 60);
 
     const { data: payment, error } = await supabase
       .from(TABLE)
