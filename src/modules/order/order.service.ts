@@ -132,6 +132,19 @@ export class OrderService {
       paid_at: new Date().toISOString(),
     });
 
+    const totalVisitors = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    
+    const { error: checkinError } = await supabase.from('visitor_checkins').insert({
+      order_id: order.id,
+      checked_in_by: adminId,
+      number_of_visitors: totalVisitors,
+      notes: 'Auto check-in dari pembelian tiket offline (di tempat)',
+    });
+
+    if (checkinError) {
+      console.error('Failed to auto check-in offline order:', checkinError.message);
+    }
+
     await Promise.allSettled([
       invoiceService.sendInvoice(order.id),
       ticketService.sendTicketEmail(order.id),
